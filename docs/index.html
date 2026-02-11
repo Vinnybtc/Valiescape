@@ -109,7 +109,7 @@ class GameState {
   reset() {
     this.playing = false; this.paused = false; this.score = 0; this.falls = 0;
     this.danceBoostsUsed = 0; this.checkpointsReached = 0; this.currentLevel = 1;
-    this.levelTime = 0; this.levelDuration = 90; this.collapsePercent = 0;
+    this.levelTime = 0; this.levelDuration = 180; this.collapsePercent = 0;
     this.levelComplete = false; this.gameOver = false;
     this.danceBoostActive = false; this.danceBoostTimer = 0; this.danceBoostCooldown = 0;
     this.danceBoostDuration = 3; this.danceBoostCooldownDuration = 10;
@@ -261,12 +261,12 @@ class CharacterController {
     this.position = new THREE.Vector3(state.spawnPosition.x, state.spawnPosition.y, state.spawnPosition.z);
     this.velocity = new THREE.Vector3(0,0,0);
     this.grounded = false; this.groundY = 0;
-    this.baseSpeed = 6; this.sprintSpeed = 8; this.autoRunSpeed = 2; this.jumpForce = 12;
-    this.gravity = -28; this.airControl = 0.4; this.strafeSpeed = 8;
-    this.coyoteTime = 0.15; this.coyoteTimer = 0; this.wasGrounded = false;
+    this.baseSpeed = 6; this.sprintSpeed = 8; this.autoRunSpeed = 1.5; this.jumpForce = 14;
+    this.gravity = -25; this.airControl = 0.6; this.strafeSpeed = 8;
+    this.coyoteTime = 0.25; this.coyoteTimer = 0; this.wasGrounded = false;
     this.danceBoosting = false; this.danceTimer = 0;
     this.bobPhase = 0; this.dancePhase = 0; this.celebrating = false; this.celebrateTimer = 0;
-    this.fallThreshold = -20; this.colliderRadius = 0.4; this.colliderHeight = 1.8;
+    this.fallThreshold = -12; this.colliderRadius = 0.4; this.colliderHeight = 1.8;
     this.mesh = this.createCharacterMesh(); this.mesh.position.copy(this.position); this.scene.add(this.mesh);
     this.discoLight = new THREE.PointLight(0xff00ff, 0, 8); this.discoLight.position.set(0,-0.5,0); this.mesh.add(this.discoLight);
   }
@@ -413,7 +413,7 @@ class RotatingPillow extends Obstacle {
       p.position.x = side*(length/2-0.3); p.castShadow=true; barGroup.add(p);
     }
     group.add(barGroup);
-    super(group,scene,'hazard'); this.barGroup=barGroup; this.speed=1.5; this.length=length; this.x=x; this.y=y; this.z=z;
+    super(group,scene,'hazard'); this.barGroup=barGroup; this.speed=0.8; this.length=length; this.x=x; this.y=y; this.z=z;
   }
   update(delta) { this.barGroup.rotation.y += this.speed*delta; }
   getHazardBounds() {
@@ -462,7 +462,7 @@ class SlipperyFloor extends Obstacle {
 class FallingCushionZone extends Obstacle {
   constructor(scene,x,y,z,w,d) {
     const group = new THREE.Group(); group.position.set(x,y,z); super(group,scene,'cushion');
-    this.cushions=[]; this.spawnTimer=0; this.spawnInterval=1.5;
+    this.cushions=[]; this.spawnTimer=0; this.spawnInterval=2.5;
     this.zoneX=x;this.zoneY=y;this.zoneZ=z;this.zoneW=w;this.zoneD=d; this.scene=scene;
   }
   update(delta) {
@@ -488,7 +488,7 @@ class CollapsingPlatform extends Obstacle {
     const mat=new THREE.MeshStandardMaterial({color:0xffcc77,roughness:0.6,emissive:0xff8800,emissiveIntensity:0.1});
     const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); mesh.position.set(x,y-h/2,z); mesh.castShadow=true; mesh.receiveShadow=true;
     super(mesh,scene,'platform'); this.originX=x;this.originY=y;this.originZ=z;this.w=w;this.h=h;this.d=d;
-    this.stepped=false;this.collapseTimer=0;this.collapseDelay=1.0;this.fallen=false;this.fallVelocity=0;this.shakePhase=0;this.mat=mat;
+    this.stepped=false;this.collapseTimer=0;this.collapseDelay=2.0;this.fallen=false;this.fallVelocity=0;this.shakePhase=0;this.mat=mat;
   }
   onStep() { if(!this.stepped) this.stepped=true; }
   update(delta) {
@@ -507,30 +507,172 @@ class LevelManager {
   loadLevel(n) { this.state.currentLevel=n; this.buildBedroomChaos(); }
   buildBedroomChaos() {
     this.scene.background = new THREE.Color(0x88aaff);
-    this.scene.fog = new THREE.FogExp2(0xaabbff, 0.005);
-    this.addPlatform(0,0,0,10,1,8,0xaaddaa);
-    this.addPlatform(0,0,12,8,1,16,0xeeddcc);
-    const p1=new RotatingPillow(this.scene,0,1.5,10,5); this.addObstacle(p1);
-    const b1=new BouncyBed(this.scene,0,0.5,18); this.addObstacle(b1);
-    this.addPlatform(0,0,24,6,1,4,0xddccee);
-    this.addPlatform(0,0,32,6,1,4,0xddccee);
-    const mp1=new MovingPlatform(this.scene,-2,0,28,3,1,3,'x',4,1.5); this.addObstacle(mp1); this.platforms.push(mp1);
-    this.addCheckpoint(0,1,34);
-    this.addPlatform(0,0,40,8,1,20,0xeeddcc);
-    const sl1=new SlipperyFloor(this.scene,0,0.52,45,8,6); this.addObstacle(sl1);
-    const cz1=new FallingCushionZone(this.scene,0,8,52,6,6); this.addObstacle(cz1);
-    this.addPlatform(-2,1.5,56,3,0.5,3,0xffccaa);
-    this.addPlatform(2,3,60,3,0.5,3,0xffccaa);
-    this.addPlatform(0,4.5,64,3,0.5,3,0xffccaa);
-    this.addPlatform(0,4.5,70,8,1,4,0xddddee);
-    this.addCheckpoint(0,5.5,72);
-    this.addPlatform(0,4.5,78,8,1,10,0xeeddcc);
-    const c1=new CollapsingPlatform(this.scene,-2,4.5,84,3,0.5,3); this.addObstacle(c1); this.platforms.push(c1); this.collapsingPlatforms.push(c1);
-    const c2=new CollapsingPlatform(this.scene,2,4.5,88,3,0.5,3); this.addObstacle(c2); this.platforms.push(c2); this.collapsingPlatforms.push(c2);
-    const c3=new CollapsingPlatform(this.scene,0,4.5,92,3,0.5,3); this.addObstacle(c3); this.platforms.push(c3); this.collapsingPlatforms.push(c3);
-    this.addPlatform(0,4.5,98,10,1,6,0xddffdd);
-    this.addPortal(0,6,100);
+    this.scene.fog = new THREE.FogExp2(0xaabbff, 0.004);
+
+    // === START - big wide platform ===
+    this.addPlatform(0,0,0,14,1,10,0xaaddaa);
+
+    // === SECTION A - easy run with slow rotating pillow ===
+    this.addPlatform(0,0,14,12,1,20,0xeeddcc);
+    const p1=new RotatingPillow(this.scene,0,1.5,12,4); this.addObstacle(p1);
+    const b1=new BouncyBed(this.scene,0,0.5,20); this.addObstacle(b1);
+
+    // === Small gap with wide platforms ===
+    this.addPlatform(0,0,28,10,1,6,0xddccee);
+    this.addPlatform(0,0,38,10,1,6,0xddccee);
+    const mp1=new MovingPlatform(this.scene,0,0,33,5,1,4,'x',3,1.0); this.addObstacle(mp1); this.platforms.push(mp1);
+
+    // === CHECKPOINT 1 ===
+    this.addCheckpoint(0,1,40);
+
+    // === Zonnebloem School building (naast het pad) ===
+    this.addZonnebloemSchool(12, 0, 45);
+
+    // === SECTION B - gentle run ===
+    this.addPlatform(0,0,46,12,1,24,0xeeddcc);
+    const sl1=new SlipperyFloor(this.scene,0,0.52,50,10,6); this.addObstacle(sl1);
+    const cz1=new FallingCushionZone(this.scene,0,10,58,6,6); this.addObstacle(cz1);
+
+    // === Gentle stepping up (wider, lower steps) ===
+    this.addPlatform(0,1,66,6,1,4,0xffccaa);
+    this.addPlatform(0,2,72,6,1,4,0xffccaa);
+    this.addPlatform(0,3,78,10,1,6,0xddddee);
+
+    // === CHECKPOINT 2 ===
+    this.addCheckpoint(0,4,80);
+
+    // === HARD SECTION (but easier than before) ===
+    this.addPlatform(0,3,86,10,1,12,0xeeddcc);
+    const c1=new CollapsingPlatform(this.scene,0,3,94,5,0.5,4); this.addObstacle(c1); this.platforms.push(c1); this.collapsingPlatforms.push(c1);
+    const c2=new CollapsingPlatform(this.scene,0,3,100,5,0.5,4); this.addObstacle(c2); this.platforms.push(c2); this.collapsingPlatforms.push(c2);
+
+    // === Final platform + portal ===
+    this.addPlatform(0,3,106,12,1,8,0xddffdd);
+    this.addPortal(0,5,108);
+
+    // === Helicopter flying around ===
+    this.addHelicopter();
+
+    // === Decorations ===
     this.addDecorations();
+  }
+
+  addZonnebloemSchool(x, y, z) {
+    const g = new THREE.Group(); g.position.set(x, y, z);
+
+    // Main building
+    const wallMat = new THREE.MeshStandardMaterial({color:0xfff8dc,roughness:0.8});
+    const building = new THREE.Mesh(new THREE.BoxGeometry(10, 6, 8), wallMat);
+    building.position.y = 3; building.castShadow = true; building.receiveShadow = true; g.add(building);
+
+    // Roof (red)
+    const roofGeo = new THREE.ConeGeometry(7.5, 2.5, 4);
+    const roof = new THREE.Mesh(roofGeo, new THREE.MeshStandardMaterial({color:0xcc3333,roughness:0.7}));
+    roof.position.y = 7.2; roof.rotation.y = Math.PI/4; roof.castShadow = true; g.add(roof);
+
+    // Door
+    const door = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.5, 0.2), new THREE.MeshStandardMaterial({color:0x8B4513}));
+    door.position.set(0, 1.25, 4.1); g.add(door);
+
+    // Windows (2 rows)
+    const winMat = new THREE.MeshStandardMaterial({color:0x88ccff,emissive:0x4488aa,emissiveIntensity:0.3,roughness:0.1,metalness:0.5});
+    for (let row = 0; row < 2; row++) {
+      for (let col = -1; col <= 1; col += 2) {
+        const win = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.2), winMat);
+        win.position.set(col * 2.5, 2 + row * 2.5, 4.1); g.add(win);
+      }
+    }
+
+    // Sign: "De Zonnebloem"
+    const signBoard = new THREE.Mesh(new THREE.BoxGeometry(6, 1.2, 0.3), new THREE.MeshStandardMaterial({color:0x2255aa}));
+    signBoard.position.set(0, 6.8, 4.1); g.add(signBoard);
+
+    // Sunflower on top of sign
+    // Flower center (brown)
+    const center = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.3, 12), new THREE.MeshStandardMaterial({color:0x8B4513}));
+    center.position.set(0, 8.2, 4.2); center.rotation.x = Math.PI/2; g.add(center);
+    // Petals (yellow)
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2;
+      const petal = new THREE.Mesh(new THREE.SphereGeometry(0.35, 6, 4), new THREE.MeshStandardMaterial({color:0xFFD700,emissive:0xFFAA00,emissiveIntensity:0.2}));
+      petal.scale.set(1, 0.4, 1);
+      petal.position.set(Math.cos(angle) * 0.9, 8.2 + Math.sin(angle) * 0.9, 4.2);
+      g.add(petal);
+    }
+    // Stem
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.5, 6), new THREE.MeshStandardMaterial({color:0x228B22}));
+    stem.position.set(0, 7.5, 4.2); g.add(stem);
+
+    // Fence around school
+    for (let i = -6; i <= 6; i += 1.5) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 6), new THREE.MeshStandardMaterial({color:0xffffff}));
+      post.position.set(i, 0.75, 5); g.add(post);
+    }
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(12, 0.1, 0.1), new THREE.MeshStandardMaterial({color:0xffffff}));
+    rail.position.set(0, 1.2, 5); g.add(rail);
+    const rail2 = rail.clone(); rail2.position.y = 0.5; g.add(rail2);
+
+    // Playground (little swing)
+    const swingFrame = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3, 3), new THREE.MeshStandardMaterial({color:0xff6600}));
+    swingFrame.position.set(-6, 1.5, 0); g.add(swingFrame);
+    const swingBar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 3), new THREE.MeshStandardMaterial({color:0xff6600}));
+    swingBar.position.set(-6, 3, 0); g.add(swingBar);
+
+    this.scene.add(g); this.levelObjects.push(g);
+  }
+
+  addHelicopter() {
+    const g = new THREE.Group();
+
+    // Body
+    const bodyGeo = new THREE.SphereGeometry(1.5, 8, 6); bodyGeo.scale(1.8, 0.8, 0.8);
+    const body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({color:0xff4444,roughness:0.4,metalness:0.3}));
+    body.castShadow = true; g.add(body);
+
+    // Cockpit window
+    const cockpit = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 6), new THREE.MeshStandardMaterial({color:0x88ccff,roughness:0.1,metalness:0.8,transparent:true,opacity:0.7}));
+    cockpit.position.set(1.5, 0.2, 0); cockpit.scale.set(1, 0.7, 0.9); g.add(cockpit);
+
+    // Tail
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 0.3), new THREE.MeshStandardMaterial({color:0xff4444,roughness:0.4}));
+    tail.position.set(-3, 0.3, 0); g.add(tail);
+
+    // Tail fin
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1, 0.6), new THREE.MeshStandardMaterial({color:0xff6666}));
+    fin.position.set(-4.3, 0.8, 0); g.add(fin);
+
+    // Tail rotor
+    const tailRotor = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.2, 0.08), new THREE.MeshStandardMaterial({color:0xcccccc}));
+    tailRotor.position.set(-4.3, 0.8, 0.35); g.add(tailRotor);
+    this.tailRotor = tailRotor;
+
+    // Main rotor mast
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), new THREE.MeshStandardMaterial({color:0x888888}));
+    mast.position.set(0, 0.85, 0); g.add(mast);
+
+    // Main rotor blades
+    const rotorGroup = new THREE.Group(); rotorGroup.position.set(0, 1.1, 0);
+    for (let i = 0; i < 4; i++) {
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(5, 0.05, 0.3), new THREE.MeshStandardMaterial({color:0xdddddd,transparent:true,opacity:0.7}));
+      blade.rotation.y = (i / 4) * Math.PI * 2;
+      rotorGroup.add(blade);
+    }
+    g.add(rotorGroup);
+    this.heliRotor = rotorGroup;
+
+    // Skids
+    const skidMat = new THREE.MeshStandardMaterial({color:0x444444});
+    const skid1 = new THREE.Mesh(new THREE.BoxGeometry(3, 0.08, 0.08), skidMat); skid1.position.set(0, -0.7, 0.5); g.add(skid1);
+    const skid2 = skid1.clone(); skid2.position.z = -0.5; g.add(skid2);
+    const strut1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), skidMat); strut1.position.set(0.5,-0.45,0.5); g.add(strut1);
+    const strut2 = strut1.clone(); strut2.position.z=-0.5; g.add(strut2);
+    const strut3 = strut1.clone(); strut3.position.x=-0.5; g.add(strut3);
+    const strut4 = strut1.clone(); strut4.position.set(-0.5,-0.45,-0.5); g.add(strut4);
+
+    g.position.set(0, 15, 50);
+    this.scene.add(g); this.levelObjects.push(g);
+    this.helicopter = g;
+    this.heliPhase = 0;
   }
   addPlatform(x,y,z,w,h,d,color) {
     const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:0.7,metalness:0.1}));
@@ -579,6 +721,16 @@ class LevelManager {
     for(const o of this.obstacles)if(o.update)o.update(delta*sm);
     this.checkPlatformCollisions(); this.checkCheckpoints(); this.checkPortal(); this.checkObstacleCollisions(delta);
     if(this.portal){this.portal.ring.rotation.z+=delta*1.5;this.portal.inner.opacity=0.4+Math.sin(Date.now()*0.003)*0.2;this.particles.spawnPortalParticles(this.portal.position,1);}
+    // Animate helicopter
+    if(this.helicopter){
+      this.heliPhase+=delta*0.4;
+      this.helicopter.position.x=Math.sin(this.heliPhase)*20;
+      this.helicopter.position.z=this.character.position.z+10+Math.cos(this.heliPhase*0.7)*15;
+      this.helicopter.position.y=14+Math.sin(this.heliPhase*1.3)*2;
+      this.helicopter.rotation.y=Math.sin(this.heliPhase)*0.3+Math.PI/2;
+      if(this.heliRotor)this.heliRotor.rotation.y+=delta*25;
+      if(this.tailRotor)this.tailRotor.rotation.z+=delta*30;
+    }
   }
   updateTimer(delta) {
     this.state.levelTime+=delta;this.state.collapsePercent=Math.min((this.state.levelTime/this.state.levelDuration)*100,100);
