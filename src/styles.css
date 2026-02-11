@@ -1,0 +1,252 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* UI Screens */
+.ui-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ui-screen > * {
+  pointer-events: auto;
+}
+
+/* Main Menu */
+#main-menu {
+  background: linear-gradient(135deg, #667eea55, #764ba255);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.menu-content {
+  text-align: center;
+  color: white;
+}
+
+.game-title {
+  font-size: 4rem;
+  font-weight: 900;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  margin-bottom: 0.5rem;
+  background: linear-gradient(to right, #fff, #e0e0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-subtitle {
+  font-size: 1.3rem;
+  opacity: 0.8;
+  margin-bottom: 2rem;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.menu-btn {
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 0.8rem 2.5rem;
+  font-size: 1.1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 200px;
+  font-weight: 600;
+}
+
+.menu-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.05);
+}
+
+.menu-btn.primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-color: transparent;
+}
+
+.menu-btn.primary:hover {
+  background: linear-gradient(135deg, #7b93ff, #8b5fbf);
+}
+
+/* HUD */
+#hud {
+  pointer-events: none;
+}
+
+#hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 15px 20px;
+}
+
+#timer-bar-container {
+  position: relative;
+  width: 300px;
+  height: 24px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#timer-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #FFC107, #F44336);
+  border-radius: 12px;
+  transition: width 0.3s;
+}
+
+#timer-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+#score-display {
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.3);
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+
+#hud-bottom {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+#dance-cooldown-container {
+  position: relative;
+  width: 180px;
+  height: 30px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+#dance-cooldown-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #e040fb, #7c4dff);
+  border-radius: 15px;
+  transition: width 0.1s;
+}
+
+#dance-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+#checkpoint-icon {
+  color: #FFD700;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  animation: checkpointFade 2s forwards;
+}
+
+@keyframes checkpointFade {
+  0% { opacity: 0; transform: translateY(20px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+#controls-hint {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Level Complete */
+#level-complete {
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+#stars-display {
+  font-size: 3rem;
+  margin: 1rem 0;
+}
+
+#bonus-text {
+  color: #FFD700;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* Game Over */
+#game-over {
+  background: rgba(30,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+#game-over h1 {
+  color: #ff6b6b;
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vali's Escape</title>
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Main Menu -->
+    <div id="main-menu" class="ui-screen">
+      <div class="menu-content">
+        <h1 class="game-title">Vali's Escape</h1>
+        <p class="game-subtitle">A Dreamy Parkour Adventure</p>
+        <div class="menu-buttons">
+          <button id="btn-play" class="menu-btn primary">Play</button>
+          <button id="btn-level-select" class="menu-btn">Level Select</button>
+          <button id="btn-settings" class="menu-btn">Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="ui-screen" style="display: none;">
+      <div id="hud-top">
+        <div id="timer-bar-container">
+          <div id="timer-bar"></div>
+          <span id="timer-label">Dream Stable</span>
+        </div>
+        <div id="score-display">Score: <span id="score-value">0</span></div>
+      </div>
+      <div id="hud-bottom">
+        <div id="dance-cooldown-container">
+          <div id="dance-cooldown-bar"></div>
+          <span id="dance-label">Dance [E]</span>
+        </div>
+        <div id="checkpoint-icon" style="display: none;">Checkpoint Saved!</div>
+      </div>
+      <div id="controls-hint">
+        <span>WASD/Arrows: Move</span>
+        <span>SPACE: Jump</span>
+        <span>SHIFT: Sprint</span>
+        <span>E: Dance Boost</span>
+        <span>R: Restart</span>
+      </div>
+    </div>
+
+    <!-- Level Complete -->
+    <div id="level-complete" class="ui-screen" style="display: none;">
+      <div class="menu-content">
+        <h1>Level Complete!</h1>
+        <div id="stars-display"></div>
+        <p>Score: <span id="final-score">0</span></p>
+        <p id="bonus-text"></p>
+        <div class="menu-buttons">
+          <button id="btn-next-level" class="menu-btn primary">Next Level</button>
+          <button id="btn-replay" class="menu-btn">Replay</button>
+          <button id="btn-menu" class="menu-btn">Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="game-over" class="ui-screen" style="display: none;">
+      <div class="menu-content">
+        <h1>Dream Collapsed!</h1>
+        <p>The dream fell apart...</p>
+        <p>Score: <span id="gameover-score">0</span></p>
+        <div class="menu-buttons">
+          <button id="btn-retry" class="menu-btn primary">Retry</button>
+          <button id="btn-gameover-menu" class="menu-btn">Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
