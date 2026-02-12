@@ -26,6 +26,7 @@
     #timer-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #4CAF50, #FFC107, #F44336); border-radius: 12px; transition: width 0.3s; }
     #timer-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 0.75rem; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
     #score-display { color: white; font-size: 1.4rem; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.5); background: rgba(0,0,0,0.3); padding: 6px 16px; border-radius: 20px; }
+    #level-name { color: white; font-size: 1rem; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,0.5); background: rgba(0,0,0,0.3); padding: 6px 16px; border-radius: 20px; text-align: center; }
     #hud-bottom { position: absolute; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 20px; }
     #dance-cooldown-container { position: relative; width: 180px; height: 30px; background: rgba(0,0,0,0.4); border-radius: 15px; overflow: hidden; }
     #dance-cooldown-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #e040fb, #7c4dff); border-radius: 15px; transition: width 0.1s; }
@@ -57,6 +58,7 @@
     <div id="hud" class="ui-screen" style="display: none;">
       <div id="hud-top">
         <div id="timer-bar-container"><div id="timer-bar"></div><span id="timer-label">Dream Stable</span></div>
+        <div id="level-name">Level 1: Slaapkamer Chaos</div>
         <div id="score-display">Score: <span id="score-value">0</span></div>
       </div>
       <div id="hud-bottom">
@@ -69,7 +71,7 @@
     </div>
     <div id="level-complete" class="ui-screen" style="display: none;">
       <div class="menu-content">
-        <h1>Level Complete!</h1>
+        <h1 id="level-complete-title">Level Complete!</h1>
         <div id="stars-display"></div>
         <p>Score: <span id="final-score">0</span></p>
         <p id="bonus-text"></p>
@@ -498,13 +500,203 @@ class CollapsingPlatform extends Obstacle {
   getBounds() { if(this.disabled||this.fallen)return null;const p=this.mesh.position;return{minX:p.x-this.w/2,maxX:p.x+this.w/2,minY:p.y-this.h/2,maxY:p.y+this.h/2,minZ:p.z-this.d/2,maxZ:p.z+this.d/2}; }
 }
 
+// ============ NPCs and Enemies ============
+class FriendNPC {
+  constructor(scene, name, bodyColor, offsetX) {
+    this.scene=scene; this.name=name; this.offsetX=offsetX; this.phase=Math.random()*Math.PI*2; this.bobPhase=0;
+    const g=new THREE.Group();
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.22,0.7,8),new THREE.MeshStandardMaterial({color:bodyColor}));
+    body.position.y=0.35; body.castShadow=true; g.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.22,10,8),new THREE.MeshStandardMaterial({color:0xffcc99}));
+    head.position.y=0.9; head.castShadow=true; g.add(head);
+    const eMat=new THREE.MeshStandardMaterial({color:0x222222});
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.035,6,6),eMat),{position:new THREE.Vector3(-0.07,0.95,0.18)}));
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.035,6,6),eMat),{position:new THREE.Vector3(0.07,0.95,0.18)}));
+    const smile=new THREE.Mesh(new THREE.TorusGeometry(0.05,0.012,4,8,Math.PI),new THREE.MeshStandardMaterial({color:0xff6666}));
+    smile.position.set(0,0.84,0.19); smile.rotation.z=Math.PI; g.add(smile);
+    this.lArm=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.35,6),new THREE.MeshStandardMaterial({color:bodyColor}));
+    this.lArm.position.set(-0.32,0.45,0); this.lArm.rotation.z=0.3; g.add(this.lArm);
+    this.rArm=this.lArm.clone(); this.rArm.position.set(0.32,0.45,0); this.rArm.rotation.z=-0.3; g.add(this.rArm);
+    this.lLeg=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.05,0.3,6),new THREE.MeshStandardMaterial({color:bodyColor}));
+    this.lLeg.position.set(-0.1,-0.05,0); g.add(this.lLeg);
+    this.rLeg=this.lLeg.clone(); this.rLeg.position.set(0.1,-0.05,0); g.add(this.rLeg);
+    this.mesh=g; scene.add(g);
+  }
+  update(delta, playerPos) {
+    this.mesh.position.z=playerPos.z-1.5+Math.sin(this.phase)*1.5;
+    this.mesh.position.x=this.offsetX+Math.sin(this.phase*0.7)*0.5;
+    this.mesh.position.y=playerPos.y;
+    this.bobPhase+=delta*10; this.phase+=delta*0.8;
+    this.lArm.rotation.x=Math.sin(this.bobPhase)*0.5; this.rArm.rotation.x=-Math.sin(this.bobPhase)*0.5;
+    this.lLeg.rotation.x=-Math.sin(this.bobPhase)*0.4; this.rLeg.rotation.x=Math.sin(this.bobPhase)*0.4;
+  }
+  cleanup() { this.scene.remove(this.mesh); }
+}
+
+class AngryTeacher extends Obstacle {
+  constructor(scene,x,y,z,patrolRange,speed) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    // Tall body (dark suit)
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.3,1.4,8),new THREE.MeshStandardMaterial({color:0x333344}));
+    body.position.y=0.7; body.castShadow=true; g.add(body);
+    // Tie
+    const tie=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.5,0.05),new THREE.MeshStandardMaterial({color:0xcc0000}));
+    tie.position.set(0,0.9,0.28); g.add(tie);
+    // Head (angry red)
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,10),new THREE.MeshStandardMaterial({color:0xffaa88}));
+    head.position.y=1.65; head.castShadow=true; g.add(head);
+    // Angry eyes
+    const eMat=new THREE.MeshStandardMaterial({color:0xcc0000});
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),eMat),{position:new THREE.Vector3(-0.1,1.7,0.25)}));
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),eMat),{position:new THREE.Vector3(0.1,1.7,0.25)}));
+    // Angry eyebrows
+    const brow=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.04,0.04),new THREE.MeshStandardMaterial({color:0x222222}));
+    const lb=brow.clone(); lb.position.set(-0.1,1.8,0.25); lb.rotation.z=0.3; g.add(lb);
+    const rb=brow.clone(); rb.position.set(0.1,1.8,0.25); rb.rotation.z=-0.3; g.add(rb);
+    // Pointer stick
+    const stick=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,1.2,6),new THREE.MeshStandardMaterial({color:0x8B4513}));
+    stick.position.set(0.5,1.0,0); stick.rotation.z=-0.5; g.add(stick);
+    // Glasses
+    const glassMat=new THREE.MeshStandardMaterial({color:0xaaddff,metalness:0.8,roughness:0.1});
+    const lg=new THREE.Mesh(new THREE.TorusGeometry(0.08,0.015,6,12),glassMat); lg.position.set(-0.1,1.7,0.28); g.add(lg);
+    const rg=lg.clone(); rg.position.set(0.1,1.7,0.28); g.add(rg);
+    const bridge=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.015,0.015),glassMat); bridge.position.set(0,1.7,0.3); g.add(bridge);
+    super(g,scene,'teacher');
+    this.originX=x;this.y=y;this.z=z;this.patrolRange=patrolRange;this.speed=speed;this.phase=Math.random()*Math.PI*2;
+    this.knockbackForce=8;
+  }
+  update(delta) { this.phase+=delta*this.speed; this.mesh.position.x=this.originX+Math.sin(this.phase)*this.patrolRange; }
+  getHazardBounds() {
+    const p=this.mesh.position;
+    return [{minX:p.x-0.5,maxX:p.x+0.5,minY:p.y-0.2,maxY:p.y+2,minZ:p.z-0.5,maxZ:p.z+0.5}];
+  }
+}
+
+class BigMonster extends Obstacle {
+  constructor(scene,x,y,z,monsterType) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    const colors={furry:0x8B4513,slimy:0x44cc44,shadow:0x442266,ice:0x88ccff};
+    const col=colors[monsterType]||0x884422;
+    // Big body
+    const bodyGeo=new THREE.SphereGeometry(1.5,10,8); bodyGeo.scale(1,1.2,1);
+    const body=new THREE.Mesh(bodyGeo,new THREE.MeshStandardMaterial({color:col,roughness:0.9}));
+    body.position.y=2; body.castShadow=true; g.add(body);
+    // Eyes (big and glowing)
+    const eyeMat=new THREE.MeshStandardMaterial({color:0xffff00,emissive:0xffaa00,emissiveIntensity:0.8});
+    const le=new THREE.Mesh(new THREE.SphereGeometry(0.3,8,8),eyeMat); le.position.set(-0.5,2.8,1.2); g.add(le);
+    const re=le.clone(); re.position.set(0.5,2.8,1.2); g.add(re);
+    // Pupils
+    const pupMat=new THREE.MeshStandardMaterial({color:0x111111});
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),pupMat),{position:new THREE.Vector3(-0.5,2.8,1.45)}));
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),pupMat),{position:new THREE.Vector3(0.5,2.8,1.45)}));
+    // Mouth
+    const mouth=new THREE.Mesh(new THREE.BoxGeometry(1,0.4,0.3),new THREE.MeshStandardMaterial({color:0x220000}));
+    mouth.position.set(0,2,1.3); g.add(mouth);
+    // Teeth
+    for(let i=-2;i<=2;i++){
+      const tooth=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.2,4),new THREE.MeshStandardMaterial({color:0xffffee}));
+      tooth.position.set(i*0.2,1.9,1.35); tooth.rotation.x=Math.PI; g.add(tooth);
+    }
+    // Arms
+    const armGeo=new THREE.CylinderGeometry(0.3,0.2,1.5,6);
+    const armMat=new THREE.MeshStandardMaterial({color:col,roughness:0.9});
+    const la=new THREE.Mesh(armGeo,armMat); la.position.set(-1.7,1.5,0); la.rotation.z=0.5; la.castShadow=true; g.add(la);
+    const ra=la.clone(); ra.position.set(1.7,1.5,0); ra.rotation.z=-0.5; g.add(ra);
+    // Legs
+    const legGeo=new THREE.CylinderGeometry(0.35,0.3,1,6);
+    const ll=new THREE.Mesh(legGeo,armMat); ll.position.set(-0.6,0.5,0); ll.castShadow=true; g.add(ll);
+    const rl=ll.clone(); rl.position.set(0.6,0.5,0); g.add(rl);
+    super(g,scene,'monster');
+    this.originX=x;this.originZ=z;this.y=y;this.stompPhase=Math.random()*Math.PI*2;this.walkPhase=0;
+    this.patrolAxis=monsterType==='ice'?'x':'z';this.patrolRange=monsterType==='shadow'?6:4;
+    this.speed=monsterType==='slimy'?0.5:0.8;
+  }
+  update(delta) {
+    this.walkPhase+=delta*this.speed;this.stompPhase+=delta*4;
+    if(this.patrolAxis==='x') this.mesh.position.x=this.originX+Math.sin(this.walkPhase)*this.patrolRange;
+    else this.mesh.position.z=this.originZ+Math.sin(this.walkPhase)*this.patrolRange;
+    this.mesh.position.y=this.y+Math.abs(Math.sin(this.stompPhase))*0.3;
+  }
+  getHazardBounds() {
+    const p=this.mesh.position;
+    return [{minX:p.x-1.5,maxX:p.x+1.5,minY:p.y-0.5,maxY:p.y+3.5,minZ:p.z-1.5,maxZ:p.z+1.5}];
+  }
+}
+
+class CrazyDad extends Obstacle {
+  constructor(scene,x,y,z,dadType) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    const shirtColors={dancer:0xff6600,bbq:0xcc0000,jumper:0x0066cc,spinner:0x00cc66};
+    const shirtCol=shirtColors[dadType]||0xff6600;
+    // Body (dad bod)
+    const bodyGeo=new THREE.CylinderGeometry(0.4,0.45,1.1,8);
+    const body=new THREE.Mesh(bodyGeo,new THREE.MeshStandardMaterial({color:shirtCol}));
+    body.position.y=0.55; body.castShadow=true; g.add(body);
+    // Dad belly
+    const belly=new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6),new THREE.MeshStandardMaterial({color:shirtCol}));
+    belly.position.set(0,0.45,0.2); g.add(belly);
+    // Head
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.3,12,10),new THREE.MeshStandardMaterial({color:0xffcc99}));
+    head.position.y=1.4; head.castShadow=true; g.add(head);
+    // Silly mustache
+    const stache=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.06,0.06),new THREE.MeshStandardMaterial({color:0x442200}));
+    stache.position.set(0,1.3,0.28); g.add(stache);
+    // Goofy eyes
+    const eMat=new THREE.MeshStandardMaterial({color:0x222222});
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),eMat),{position:new THREE.Vector3(-0.1,1.45,0.25)}));
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),eMat),{position:new THREE.Vector3(0.1,1.45,0.25)}));
+    // Big grin
+    const grin=new THREE.Mesh(new THREE.TorusGeometry(0.1,0.02,4,8,Math.PI),new THREE.MeshStandardMaterial({color:0xff4444}));
+    grin.position.set(0,1.25,0.26); grin.rotation.z=Math.PI; g.add(grin);
+    // Shorts
+    const shorts=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.35,0.3,8),new THREE.MeshStandardMaterial({color:0x445566}));
+    shorts.position.y=0.1; g.add(shorts);
+    // Socks + sandals (classic dad)
+    const sockMat=new THREE.MeshStandardMaterial({color:0xffffff});
+    const sandMat=new THREE.MeshStandardMaterial({color:0x8B4513});
+    for(const sx of [-0.15,0.15]) {
+      const sock=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.07,0.25,6),sockMat); sock.position.set(sx,-0.15,0); g.add(sock);
+      const sandal=new THREE.Mesh(new THREE.BoxGeometry(0.18,0.05,0.25),sandMat); sandal.position.set(sx,-0.28,0.03); g.add(sandal);
+    }
+    // Props per type
+    if(dadType==='bbq'){
+      const spatula=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.8,0.06),new THREE.MeshStandardMaterial({color:0x888888}));
+      spatula.position.set(0.5,0.9,0.2); spatula.rotation.z=-0.3; g.add(spatula);
+    }
+    // Arms
+    this.lArm=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.5,6),new THREE.MeshStandardMaterial({color:0xffcc99}));
+    this.lArm.position.set(-0.5,0.7,0); this.lArm.rotation.z=0.3; g.add(this.lArm);
+    this.rArm=this.lArm.clone(); this.rArm.position.set(0.5,0.7,0); this.rArm.rotation.z=-0.3; g.add(this.rArm);
+    super(g,scene,dadType==='jumper'?'bouncy':'dad');
+    this.dadType=dadType;this.originX=x;this.originY=y;this.z=z;this.phase=Math.random()*Math.PI*2;
+    this.bounceForce=16;
+  }
+  update(delta) {
+    this.phase+=delta*3;
+    if(this.dadType==='dancer'){this.mesh.rotation.y=Math.sin(this.phase)*0.5;this.lArm.rotation.x=-1.2+Math.sin(this.phase*2)*0.5;this.rArm.rotation.x=-1.2+Math.cos(this.phase*2)*0.5;}
+    else if(this.dadType==='bbq'){this.lArm.rotation.x=Math.sin(this.phase)*0.3;this.mesh.position.x=this.originX+Math.sin(this.phase*0.3)*1;}
+    else if(this.dadType==='jumper'){this.mesh.position.y=this.originY+Math.abs(Math.sin(this.phase))*2;}
+    else if(this.dadType==='spinner'){this.mesh.rotation.y+=delta*5;this.mesh.position.x=this.originX+Math.sin(this.phase*0.5)*2;}
+  }
+  getHazardBounds() {
+    const p=this.mesh.position;
+    return [{minX:p.x-0.6,maxX:p.x+0.6,minY:p.y-0.3,maxY:p.y+1.8,minZ:p.z-0.6,maxZ:p.z+0.6}];
+  }
+}
+
 // ============ LevelManager ============
 class LevelManager {
   constructor(scene,state,character,audio,particles) {
     this.scene=scene;this.state=state;this.character=character;this.audio=audio;this.particles=particles;
     this.obstacles=[];this.platforms=[];this.checkpoints=[];this.portal=null;this.levelObjects=[];this.collapsingPlatforms=[];this.alarmTickTimer=0;
+    this.friends=[];this.helicopter=null;this.heliRotor=null;this.tailRotor=null;this.heliPhase=0;
   }
-  loadLevel(n) { this.state.currentLevel=n; this.buildBedroomChaos(); }
+  loadLevel(n) {
+    this.state.currentLevel=n;
+    const builders={1:'buildBedroomChaos',2:'buildSchoolyard',3:'buildAngryTeachers',4:'buildMonsterForest',5:'buildCrazyDads',6:'buildGrandFinale'};
+    const method=builders[n]||'buildBedroomChaos';
+    this[method]();
+  }
   buildBedroomChaos() {
     this.scene.background = new THREE.Color(0x88aaff);
     this.scene.fog = new THREE.FogExp2(0xaabbff, 0.004);
@@ -713,6 +905,226 @@ class LevelManager {
     for(let i=0;i<8;i++){const sz=1+Math.random()*2;const b=new THREE.Mesh(new THREE.BoxGeometry(sz,sz,sz),new THREE.MeshStandardMaterial({color:bc[Math.floor(Math.random()*bc.length)],roughness:0.6}));
       const side=Math.random()>0.5?1:-1;b.position.set(side*(8+Math.random()*5),sz/2,10+Math.random()*90);b.rotation.y=Math.random()*0.5;b.castShadow=true;this.scene.add(b);this.levelObjects.push(b);}
   }
+  // ====== LEVEL 2: Schoolplein met Vriendjes ======
+  buildSchoolyard() {
+    this.scene.background=new THREE.Color(0x66ccff);
+    this.scene.fog=new THREE.FogExp2(0x99ddff,0.004);
+    // Friends!
+    this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-2.5));
+    this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,2.5));
+    this.friends.push(new FriendNPC(this.scene,'Daan',0x44cc44,-4));
+    // School in background
+    this.addZonnebloemSchool(-15,0,30);
+    // Start
+    this.addPlatform(0,0,0,14,1,10,0x44aa44);
+    // Schoolyard with playground
+    this.addPlatform(0,0,14,16,1,30,0x88cc66);
+    const b1=new BouncyBed(this.scene,-3,0.5,20); this.addObstacle(b1);
+    const b2=new BouncyBed(this.scene,3,0.5,28); this.addObstacle(b2);
+    this.addCheckpoint(0,1,32);
+    // Stepping stones (like hopscotch)
+    for(let i=0;i<5;i++) this.addPlatform((i%2===0?-1:1)*1.5, 0, 40+i*5, 4, 1, 3, 0xffcc66);
+    // Wide bridge
+    this.addPlatform(0,0,68,10,1,8,0xddccaa);
+    const mp1=new MovingPlatform(this.scene,0,0,75,5,1,4,'x',4,0.8); this.addObstacle(mp1); this.platforms.push(mp1);
+    this.addPlatform(0,0,82,10,1,8,0x88cc66);
+    this.addCheckpoint(0,1,84);
+    // Slides (ramps up)
+    this.addPlatform(0,1,90,8,1,6,0xffaa44);
+    this.addPlatform(0,2,98,8,1,6,0xff8844);
+    this.addPlatform(0,3,106,12,1,8,0x44aa44);
+    this.addPortal(0,5,110);
+    this.addHelicopter();
+    this.addCloudDeco();
+  }
+
+  // ====== LEVEL 3: Gang van de Boze Meesters ======
+  buildAngryTeachers() {
+    this.scene.background=new THREE.Color(0x556677);
+    this.scene.fog=new THREE.FogExp2(0x667788,0.006);
+    // School hallway theme
+    this.addPlatform(0,0,0,14,1,10,0xccbbaa);
+    // Long corridor
+    this.addPlatform(0,0,14,8,1,20,0xaa9988);
+    // Walls (decoration)
+    for(let z=5;z<120;z+=4){
+      for(const side of [-5,5]){
+        const wall=new THREE.Mesh(new THREE.BoxGeometry(0.5,4,3),new THREE.MeshStandardMaterial({color:0xddccbb}));
+        wall.position.set(side,2,z); wall.castShadow=true; this.scene.add(wall); this.levelObjects.push(wall);
+      }
+    }
+    // First teacher
+    const t1=new AngryTeacher(this.scene,0,0.5,22,3,1.2); this.addObstacle(t1);
+    this.addPlatform(0,0,30,8,1,8,0xccbbaa);
+    this.addCheckpoint(0,1,34);
+    // Classroom section
+    this.addPlatform(0,0,40,10,1,20,0xaa9988);
+    const t2=new AngryTeacher(this.scene,-2,0.5,45,2,1.5); this.addObstacle(t2);
+    const t3=new AngryTeacher(this.scene,2,0.5,52,2,1.0); this.addObstacle(t3);
+    // Bouncy desk
+    const bd=new BouncyBed(this.scene,0,0.5,56); this.addObstacle(bd);
+    this.addPlatform(0,0,64,8,1,6,0xccbbaa);
+    this.addPlatform(0,1,72,8,1,6,0xbbaa99);
+    this.addCheckpoint(0,2,74);
+    // Principal's office gauntlet
+    this.addPlatform(0,1,80,10,1,24,0xaa9988);
+    const t4=new AngryTeacher(this.scene,-2,1.5,85,3,1.8); this.addObstacle(t4);
+    const t5=new AngryTeacher(this.scene,2,1.5,92,3,1.3); this.addObstacle(t5);
+    const t6=new AngryTeacher(this.scene,0,1.5,98,4,2.0); this.addObstacle(t6);
+    this.addPlatform(0,1,108,12,1,8,0xddccbb);
+    this.addPortal(0,3,110);
+    // One friend helps
+    this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-3));
+    this.addCloudDeco();
+  }
+
+  // ====== LEVEL 4: Het Monster Bos ======
+  buildMonsterForest() {
+    this.scene.background=new THREE.Color(0x2a1a3a);
+    this.scene.fog=new THREE.FogExp2(0x3a2a4a,0.008);
+    // Dark forest theme
+    this.addPlatform(0,0,0,14,1,10,0x445533);
+    // Trees decoration
+    for(let i=0;i<30;i++){
+      const side=(Math.random()>0.5?1:-1)*(6+Math.random()*8);
+      const tz=Math.random()*130;
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,4+Math.random()*3,6),new THREE.MeshStandardMaterial({color:0x4a3520}));
+      trunk.position.set(side,2,tz); trunk.castShadow=true; this.scene.add(trunk); this.levelObjects.push(trunk);
+      const leaves=new THREE.Mesh(new THREE.SphereGeometry(1.5+Math.random(),8,6),new THREE.MeshStandardMaterial({color:0x225522+Math.floor(Math.random()*0x113311)}));
+      leaves.position.set(side,5+Math.random()*2,tz); leaves.castShadow=true; this.scene.add(leaves); this.levelObjects.push(leaves);
+    }
+    // Forest path
+    this.addPlatform(0,0,14,10,1,16,0x556644);
+    // First monster - furry bear
+    const m1=new BigMonster(this.scene,0,0,24,'furry'); this.addObstacle(m1);
+    this.addPlatform(0,0,34,10,1,8,0x556644);
+    this.addCheckpoint(0,1,38);
+    // Slimy section
+    this.addPlatform(0,0,44,10,1,20,0x445533);
+    const sl=new SlipperyFloor(this.scene,0,0.52,48,10,6); this.addObstacle(sl);
+    const m2=new BigMonster(this.scene,-3,0,52,'slimy'); this.addObstacle(m2);
+    const m3=new BigMonster(this.scene,3,0,58,'slimy'); this.addObstacle(m3);
+    this.addPlatform(0,0,68,8,1,6,0x667755);
+    this.addCheckpoint(0,1,70);
+    // Shadow monster canyon
+    this.addPlatform(0,0,76,10,1,20,0x445533);
+    const m4=new BigMonster(this.scene,0,0,82,'shadow'); this.addObstacle(m4);
+    // Platforms over ice monster
+    this.addPlatform(-2,2,92,4,1,4,0x667755);
+    this.addPlatform(2,2,98,4,1,4,0x667755);
+    const m5=new BigMonster(this.scene,0,0,95,'ice'); this.addObstacle(m5);
+    this.addPlatform(0,2,104,12,1,8,0x88aa77);
+    this.addPortal(0,4,108);
+    // Friends for courage
+    this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,3));
+    this.friends.push(new FriendNPC(this.scene,'Daan',0x44cc44,-3));
+    this.addCloudDeco();
+  }
+
+  // ====== LEVEL 5: Gekke Papa's Droomhuis ======
+  buildCrazyDads() {
+    this.scene.background=new THREE.Color(0xffaa55);
+    this.scene.fog=new THREE.FogExp2(0xffcc88,0.004);
+    // Wacky house theme
+    this.addPlatform(0,0,0,14,1,10,0xffccaa);
+    // House walls (tilted for wacky effect)
+    for(let z=10;z<120;z+=6){
+      for(const side of [-6,6]){
+        const wall=new THREE.Mesh(new THREE.BoxGeometry(0.5,5,4),new THREE.MeshStandardMaterial({color:z%12===0?0xff8866:0xffaa88}));
+        wall.position.set(side,2.5,z); wall.rotation.z=(Math.random()-0.5)*0.15; wall.castShadow=true;
+        this.scene.add(wall); this.levelObjects.push(wall);
+      }
+    }
+    // Living room
+    this.addPlatform(0,0,14,12,1,16,0xeeddcc);
+    // Dancing dad
+    const d1=new CrazyDad(this.scene,-3,0.5,18,'dancer'); this.addObstacle(d1);
+    // BBQ dad
+    const d2=new CrazyDad(this.scene,3,0.5,24,'bbq'); this.addObstacle(d2);
+    this.addCheckpoint(0,1,28);
+    // Kitchen chaos
+    this.addPlatform(0,0,34,12,1,20,0xddccbb);
+    const d3=new CrazyDad(this.scene,0,0.5,40,'spinner'); this.addObstacle(d3);
+    // Bouncy couch section
+    const bb1=new BouncyBed(this.scene,-2,0.5,48); this.addObstacle(bb1);
+    const bb2=new BouncyBed(this.scene,2,0.5,48); this.addObstacle(bb2);
+    // Jumpy dad (acts like trampoline)
+    const d4=new CrazyDad(this.scene,0,0.5,52,'jumper'); this.addObstacle(d4);
+    this.addPlatform(0,0,58,10,1,8,0xeeddcc);
+    this.addCheckpoint(0,1,60);
+    // Garage madness
+    this.addPlatform(0,0,66,12,1,24,0xccbbaa);
+    const d5=new CrazyDad(this.scene,-3,0.5,70,'spinner'); this.addObstacle(d5);
+    const d6=new CrazyDad(this.scene,3,0.5,76,'dancer'); this.addObstacle(d6);
+    const d7=new CrazyDad(this.scene,0,0.5,82,'bbq'); this.addObstacle(d7);
+    // Steps to roof
+    this.addPlatform(0,1,92,8,1,4,0xffaa66);
+    this.addPlatform(0,2.5,98,8,1,4,0xff8844);
+    this.addPlatform(0,4,104,12,1,8,0xffcc88);
+    this.addPortal(0,6,108);
+    // Friends
+    this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-4));
+    this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,4));
+    this.addHelicopter();
+    this.addCloudDeco();
+  }
+
+  // ====== LEVEL 6: De Grote Finale ======
+  buildGrandFinale() {
+    this.scene.background=new THREE.Color(0x6644aa);
+    this.scene.fog=new THREE.FogExp2(0x7755bb,0.003);
+    // Epic rainbow theme
+    this.addPlatform(0,0,0,14,1,10,0xaaddaa);
+    // All friends!
+    this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-3));
+    this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,3));
+    this.friends.push(new FriendNPC(this.scene,'Daan',0x44cc44,-5));
+    this.friends.push(new FriendNPC(this.scene,'Noor',0xffaa00,5));
+    // Rainbow platforms
+    const rainbowColors=[0xff4444,0xff8844,0xffdd44,0x44dd44,0x4488ff,0x8844ff];
+    for(let i=0;i<6;i++) this.addPlatform(0,0,12+i*7,10,1,5,rainbowColors[i]);
+    // Teacher gauntlet
+    const t1=new AngryTeacher(this.scene,-2,0.5,20,3,1.5); this.addObstacle(t1);
+    const t2=new AngryTeacher(this.scene,2,0.5,35,3,1.8); this.addObstacle(t2);
+    this.addCheckpoint(0,1,50);
+    // Zonnebloem school
+    this.addZonnebloemSchool(15,0,55);
+    // Monster section
+    this.addPlatform(0,0,56,12,1,24,0x556644);
+    const m1=new BigMonster(this.scene,-3,0,62,'furry'); this.addObstacle(m1);
+    const m2=new BigMonster(this.scene,3,0,70,'shadow'); this.addObstacle(m2);
+    this.addCheckpoint(0,1,76);
+    // Crazy dad bridge
+    this.addPlatform(0,0,82,12,1,20,0xffccaa);
+    const d1=new CrazyDad(this.scene,-3,0.5,86,'dancer'); this.addObstacle(d1);
+    const d2=new CrazyDad(this.scene,3,0.5,90,'spinner'); this.addObstacle(d2);
+    const d3=new CrazyDad(this.scene,0,0.5,94,'jumper'); this.addObstacle(d3);
+    // Final ascent
+    this.addPlatform(0,2,104,8,1,4,0xffdd44);
+    this.addPlatform(0,4,110,8,1,4,0x44dd44);
+    this.addPlatform(0,6,116,12,1,8,0xffffff);
+    // BOSS MONSTER
+    const boss=new BigMonster(this.scene,0,6,122,'shadow'); this.addObstacle(boss);
+    this.addPlatform(0,6,130,14,1,10,0xffd700);
+    this.addPortal(0,8,134);
+    this.addHelicopter();
+    // Epic cloud deco
+    this.addCloudDeco();
+    // Rainbow arches
+    for(let i=0;i<3;i++){
+      const arch=new THREE.Mesh(new THREE.TorusGeometry(8,0.5,8,24,Math.PI),new THREE.MeshStandardMaterial({color:rainbowColors[i*2],emissive:rainbowColors[i*2],emissiveIntensity:0.3,transparent:true,opacity:0.5}));
+      arch.position.set(0,4,30+i*40); arch.rotation.y=Math.PI/2; this.scene.add(arch); this.levelObjects.push(arch);
+    }
+  }
+
+  addCloudDeco() {
+    for(let i=0;i<40;i++){
+      const s=new THREE.Mesh(new THREE.SphereGeometry(0.8+Math.random()*1.5,6,5),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.2+Math.random()*0.3}));
+      s.position.set((Math.random()-0.5)*60,15+Math.random()*25,Math.random()*140);
+      this.scene.add(s);this.levelObjects.push(s);
+    }
+  }
+
   addObstacle(o) { this.obstacles.push(o); }
   update(delta) {
     if(this.state.levelComplete||this.state.gameOver)return;
@@ -721,7 +1133,7 @@ class LevelManager {
     for(const o of this.obstacles)if(o.update)o.update(delta*sm);
     this.checkPlatformCollisions(); this.checkCheckpoints(); this.checkPortal(); this.checkObstacleCollisions(delta);
     if(this.portal){this.portal.ring.rotation.z+=delta*1.5;this.portal.inner.opacity=0.4+Math.sin(Date.now()*0.003)*0.2;this.particles.spawnPortalParticles(this.portal.position,1);}
-    // Animate helicopter
+    for(const f of this.friends) f.update(delta, this.character.position);
     if(this.helicopter){
       this.heliPhase+=delta*0.4;
       this.helicopter.position.x=Math.sin(this.heliPhase)*20;
@@ -779,13 +1191,18 @@ class LevelManager {
       for(const h of hazards){if(pos.x>h.minX&&pos.x<h.maxX&&pos.y>h.minY&&pos.y<h.maxY&&pos.z>h.minZ&&pos.z<h.maxZ){
         if(obs.type==='bouncy'){this.character.bounce(obs.bounceForce||15);this.audio.playBounce();}
         else if(obs.type==='cushion'){this.character.velocity.x+=(Math.random()-0.5)*5;this.character.velocity.y=3;}
+        else if(obs.type==='teacher'){this.character.velocity.z=-obs.knockbackForce;this.character.velocity.y=5;this.audio.playFall();this.camera&&this.camera.shake&&this.camera.shake(0.3,0.3);}
+        else if(obs.type==='monster'){this.character.velocity.z=-12;this.character.velocity.y=8;this.character.velocity.x=(Math.random()-0.5)*6;this.audio.playFall();this.camera&&this.camera.shake&&this.camera.shake(0.5,0.4);}
+        else if(obs.type==='dad'){this.character.velocity.x+=(Math.random()-0.5)*8;this.character.velocity.y=4;this.audio.playBounce();}
       }}
     }
   }
   cleanup() {
     for(const o of this.levelObjects){this.scene.remove(o);o.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material){if(Array.isArray(c.material))c.material.forEach(m=>m.dispose());else c.material.dispose();}});}
     for(const o of this.obstacles)if(o.cleanup)o.cleanup();
+    for(const f of this.friends) f.cleanup();
     this.levelObjects=[];this.platforms=[];this.obstacles=[];this.checkpoints=[];this.portal=null;this.collapsingPlatforms=[];this._collapseStarted=false;
+    this.friends=[];this.helicopter=null;this.heliRotor=null;this.tailRotor=null;this.heliPhase=0;
   }
 }
 
@@ -800,7 +1217,7 @@ class UIManager {
     document.getElementById('btn-play').addEventListener('click',()=>{this.game.audio.init();this.game.startGame();});
     document.getElementById('btn-level-select').addEventListener('click',()=>{this.game.audio.init();this.game.startGame();});
     document.getElementById('btn-settings').addEventListener('click',()=>{alert('Settings coming soon!');});
-    document.getElementById('btn-next-level').addEventListener('click',()=>{this.game.restartLevel();});
+    document.getElementById('btn-next-level').addEventListener('click',()=>{this.game.nextLevel();});
     document.getElementById('btn-replay').addEventListener('click',()=>{this.game.restartLevel();});
     document.getElementById('btn-menu').addEventListener('click',()=>{this.game.showMenu();});
     document.getElementById('btn-retry').addEventListener('click',()=>{this.game.restartLevel();});
@@ -812,10 +1229,18 @@ class UIManager {
     let h='';for(let i=0;i<3;i++){if(i<stars)h+='<span style="color:#FFD700;text-shadow:0 0 10px #FFD700;">&#9733;</span>';else h+='<span style="color:#555;">&#9733;</span>';}
     el.innerHTML=h;document.getElementById('final-score').textContent=this.state.score;
     const bonuses=[];if(this.state.falls===0)bonuses.push('No Falls Bonus: +300');if(this.state.levelTime<this.state.levelDuration*0.5)bonuses.push('Speed Bonus!');
-    document.getElementById('bonus-text').textContent=bonuses.join(' | ');this.showScreen('level-complete');
+    document.getElementById('bonus-text').textContent=bonuses.join(' | ');
+    const levelNames={1:'Slaapkamer Chaos',2:'Schoolplein met Vriendjes',3:'Boze Meesters',4:'Het Monster Bos',5:"Gekke Papa's Droomhuis",6:'De Grote Finale'};
+    const lct=document.getElementById('level-complete-title');
+    if(lct)lct.textContent=`Level ${this.state.currentLevel} Gehaald!`;
+    const bnl=document.getElementById('btn-next-level');
+    if(bnl)bnl.textContent=this.state.currentLevel>=6?'Terug naar Menu':'Volgend Level';
+    this.showScreen('level-complete');
   }
   update(delta) {
     if(!this.state.playing)return;
+    const levelNames={1:'Slaapkamer Chaos',2:'Schoolplein met Vriendjes',3:'Boze Meesters',4:'Het Monster Bos',5:"Gekke Papa's Droomhuis",6:'De Grote Finale'};
+    const ln=document.getElementById('level-name');if(ln)ln.textContent=`Level ${this.state.currentLevel}: ${levelNames[this.state.currentLevel]||'???'}`;
     const tb=document.getElementById('timer-bar');const tl=document.getElementById('timer-label');
     tb.style.width=`${this.state.collapsePercent}%`;
     if(this.state.collapsePercent<50)tl.textContent='Dream Stable';else if(this.state.collapsePercent<80)tl.textContent='Dream Weakening...';else tl.textContent='DREAM COLLAPSING!';
@@ -858,14 +1283,30 @@ class Game {
     this.character=new CharacterController(this.scene,this.state,this.input,this.audio,this.particles);
     this.camera=new CameraController(this.character);
     this.levelManager=new LevelManager(this.scene,this.state,this.character,this.audio,this.particles);
+    this.levelManager.camera=this.camera;
     this.levelManager.loadLevel(1);this.ui.showScreen('hud');this.state.playing=true;
   }
-  restartLevel() {
+  nextLevel() {
+    const nextLvl=this.state.currentLevel+1;
+    if(nextLvl>6){this.showMenu();return;}
+    const oldScore=this.state.score;
     if(this.levelManager)this.levelManager.cleanup();if(this.character)this.character.cleanup();
-    this.state.reset();this.character=new CharacterController(this.scene,this.state,this.input,this.audio,this.particles);
+    this.state.reset();this.state.score=oldScore;this.state.currentLevel=nextLvl;
+    this.character=new CharacterController(this.scene,this.state,this.input,this.audio,this.particles);
     this.camera=new CameraController(this.character);
     this.levelManager=new LevelManager(this.scene,this.state,this.character,this.audio,this.particles);
-    this.levelManager.loadLevel(1);this.ui.showScreen('hud');this.state.playing=true;
+    this.levelManager.camera=this.camera;
+    this.levelManager.loadLevel(nextLvl);this.ui.showScreen('hud');this.state.playing=true;
+  }
+  restartLevel() {
+    const lvl=this.state.currentLevel||1;
+    if(this.levelManager)this.levelManager.cleanup();if(this.character)this.character.cleanup();
+    this.state.reset();this.state.currentLevel=lvl;
+    this.character=new CharacterController(this.scene,this.state,this.input,this.audio,this.particles);
+    this.camera=new CameraController(this.character);
+    this.levelManager=new LevelManager(this.scene,this.state,this.character,this.audio,this.particles);
+    this.levelManager.camera=this.camera;
+    this.levelManager.loadLevel(lvl);this.ui.showScreen('hud');this.state.playing=true;
   }
   animate() {
     requestAnimationFrame(()=>this.animate());const delta=Math.min(this.clock.getDelta(),0.05);
