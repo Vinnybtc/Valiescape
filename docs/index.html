@@ -98,7 +98,7 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"
   }
 }
 </script>
@@ -1683,12 +1683,17 @@ class Game {
     window.addEventListener('resize',()=>{this.renderer.setSize(window.innerWidth,window.innerHeight);if(this.camera){this.camera.camera.aspect=window.innerWidth/window.innerHeight;this.camera.camera.updateProjectionMatrix();}});
   }
   startGame() {
-    this.state.reset();this.scene.fog=new THREE.FogExp2(0xccccff,0.008);this.scene.background=new THREE.Color(0x88aaff);
-    this.character=new CharacterController(this.scene,this.state,this.input,this.audio,this.particles);
-    this.camera=new CameraController(this.character);
-    this.levelManager=new LevelManager(this.scene,this.state,this.character,this.audio,this.particles);
-    this.levelManager.camera=this.camera;
-    this.levelManager.loadLevel(1);this.ui.showScreen('hud');this.state.playing=true;
+    try {
+      this.state.reset();this.scene.fog=new THREE.FogExp2(0xccccff,0.008);this.scene.background=new THREE.Color(0x88aaff);
+      this.character=new CharacterController(this.scene,this.state,this.input,this.audio,this.particles);
+      this.camera=new CameraController(this.character);
+      this.levelManager=new LevelManager(this.scene,this.state,this.character,this.audio,this.particles);
+      this.levelManager.camera=this.camera;
+      this.levelManager.loadLevel(1);this.ui.showScreen('hud');this.state.playing=true;
+    } catch(e) {
+      console.error('startGame error:', e);
+      alert('Game error: ' + e.message);
+    }
   }
   cleanScene() {
     const toRemove=[];
@@ -1737,8 +1742,25 @@ class Game {
   }
 }
 
-const game = new Game();
-window.game = game;
+try {
+  const game = new Game();
+  window.game = game;
+} catch(e) {
+  console.error('Game init error:', e);
+  document.getElementById('main-menu').innerHTML = '<div class="menu-content"><h1 style="color:#ff4444;">Error</h1><p style="color:white;">'+e.message+'</p></div>';
+}
+</script>
+<script>
+// Fallback: if module fails to load, show error and make Play retry
+window.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    if (!window.game) {
+      console.error('Game module failed to load');
+      var btn = document.getElementById('btn-play');
+      if (btn) btn.addEventListener('click', function() { location.reload(); });
+    }
+  }, 3000);
+});
 </script>
 </body>
 </html>
