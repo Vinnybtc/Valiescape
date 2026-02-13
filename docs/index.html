@@ -1028,219 +1028,331 @@ class LevelManager {
     for(let i=0;i<8;i++){const sz=1+Math.random()*2;const b=new THREE.Mesh(new THREE.BoxGeometry(sz,sz,sz),new THREE.MeshStandardMaterial({color:bc[Math.floor(Math.random()*bc.length)],roughness:0.6}));
       const side=Math.random()>0.5?1:-1;b.position.set(side*(8+Math.random()*5),sz/2,10+Math.random()*90);b.rotation.y=Math.random()*0.5;b.castShadow=true;this.scene.add(b);this.levelObjects.push(b);}
   }
-  // ====== LEVEL 2: Schoolplein met Vriendjes ======
+  // ====== LEVEL 2: De Vruchtenbuurt ======
   buildSchoolyard() {
-    this.scene.background=new THREE.Color(0x66ccff);
+    this.scene.background=new THREE.Color(0x88ccff);
     this.scene.fog=new THREE.FogExp2(0x99ddff,0.004);
     // Friends!
     this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-2.5));
     this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,2.5));
     this.friends.push(new FriendNPC(this.scene,'Daan',0x44cc44,-4));
-    // School in background
-    this.addZonnebloemSchool(-15,0,30);
-    // Start
-    this.addPlatform(0,0,0,14,1,10,0x44aa44);
-    // Schoolyard with playground
-    this.addPlatform(0,0,14,16,1,30,0x88cc66);
-    const b1=new BouncyBed(this.scene,-3,0.5,20); this.addObstacle(b1);
-    const b2=new BouncyBed(this.scene,3,0.5,28); this.addObstacle(b2);
+    // Start - Hyacinthweg bij de school
+    this.addPlatform(0,0,0,14,1,10,0x999999);
+    this.addZonnebloemSchool(-15,0,5);
+    this.addStreetSign(5,0,0,'Hyacinthweg');
+    // Appelstraat - winkelstraat
+    this.addPlatform(0,0,14,12,1,24,0x888888);
+    this.addStreetSign(-5,0,14,'Appelstraat');
+    this.addRestaurant(10,0,18,'Burrata',0xffeedd,0xcc3333);
+    this.addRestaurant(-10,0,28,'Appels & Peren',0xddffdd,0x338833);
+    const b1=new BouncyBed(this.scene,0,0.5,22); this.addObstacle(b1);
     this.addCheckpoint(0,1,32);
-    // Stepping stones (like hopscotch)
-    for(let i=0;i<5;i++) this.addPlatform((i%2===0?-1:1)*1.5, 0, 40+i*5, 4, 1, 3, 0xffcc66);
-    // Wide bridge
-    this.addPlatform(0,0,68,10,1,8,0xddccaa);
+    // Vlierboomstraat
+    this.addPlatform(0,0,34,10,1,6,0x888888);
+    this.addStreetSign(5,0,34,'Vlierboomstraat');
+    // Aardbeistraat - hopscotch
+    this.addStreetSign(-5,0,42,'Aardbeistraat');
+    for(let i=0;i<5;i++) this.addPlatform((i%2===0?-1:1)*1.5,0,42+i*5,4,1,3,0xffcc66);
+    // Druivenstraat met winkels
+    this.addPlatform(0,0,68,10,1,8,0x888888);
+    this.addStreetSign(5,0,68,'Druivenstraat');
+    this.addRestaurant(-10,0,70,'Lunch Op de Hoek',0xffddcc,0x884422);
     const mp1=new MovingPlatform(this.scene,0,0,75,5,1,4,'x',4,0.8); this.addObstacle(mp1); this.platforms.push(mp1);
-    this.addPlatform(0,0,82,10,1,8,0x88cc66);
-    this.addCheckpoint(0,1,84);
-    // Slides (ramps up)
-    this.addPlatform(0,1,90,8,1,6,0xffaa44);
-    this.addPlatform(0,2,98,8,1,6,0xff8844);
-    this.addPlatform(0,3,106,12,1,8,0x44aa44);
-    this.addPortal(0,5,110);
+    // Savornin Lohmanplein (winkelcentrum)
+    this.addPlatform(0,0,82,12,1,10,0x999999);
+    this.addStreetSign(6,0,82,'Savornin Lohmanplein');
+    this.addRestaurant(12,0,84,'HEMA',0xcc0000,0xaa0000);
+    this.addCheckpoint(0,1,86);
+    // Naar het einde via Perenstraat
+    this.addStreetSign(-5,0,92,'Perenstraat');
+    this.addPlatform(0,1,94,8,1,6,0x888888);
+    this.addPlatform(0,2,102,8,1,6,0x888888);
+    this.addPlatform(0,3,110,12,1,8,0x88cc66);
+    this.addPortal(0,5,114);
     this.addHelicopter();
     this.addCloudDeco();
   }
 
-  // ====== LEVEL 3: Gang van de Boze Meesters ======
+  // ====== LEVEL 3: Citroenstraat & Speeltuinen ======
   buildAngryTeachers() {
-    this.scene.background=new THREE.Color(0x556677);
-    this.scene.fog=new THREE.FogExp2(0x667788,0.006);
-    // School hallway theme
-    this.addPlatform(0,0,0,14,1,10,0xccbbaa);
-    // Long corridor
-    this.addPlatform(0,0,14,8,1,20,0xaa9988);
-    // Walls (decoration)
-    for(let z=5;z<120;z+=4){
-      for(const side of [-5,5]){
-        const wall=new THREE.Mesh(new THREE.BoxGeometry(0.5,4,3),new THREE.MeshStandardMaterial({color:0xddccbb}));
-        wall.position.set(side,2,z); wall.castShadow=true; this.scene.add(wall); this.levelObjects.push(wall);
+    this.scene.background=new THREE.Color(0x88ccff);
+    this.scene.fog=new THREE.FogExp2(0xaaddff,0.004);
+    // Friends
+    this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-3));
+    this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,3));
+    // Start - Citroenstraat
+    this.addPlatform(0,0,0,14,1,10,0x999999);
+    this.addStreetSign(6,0,0,'Citroenstraat');
+    // Houses along the street (1930s Vruchtenbuurt style)
+    for(let z=5;z<120;z+=8){
+      for(const side of [-1,1]){
+        const houseCol=[0xcc8866,0xddaa77,0xbb7755,0xccaa88][Math.floor(Math.random()*4)];
+        const house=new THREE.Mesh(new THREE.BoxGeometry(4,4,5),new THREE.MeshStandardMaterial({color:houseCol,roughness:0.8}));
+        house.position.set(side*9,2,z); house.castShadow=true; this.scene.add(house); this.levelObjects.push(house);
+        const roof=new THREE.Mesh(new THREE.ConeGeometry(3.5,1.5,4),new THREE.MeshStandardMaterial({color:0x884422}));
+        roof.position.set(side*9,4.7,z); roof.rotation.y=Math.PI/4; this.scene.add(roof); this.levelObjects.push(roof);
       }
     }
-    // First teacher
-    const t1=new AngryTeacher(this.scene,0,0.5,22,3,1.2); this.addObstacle(t1);
-    this.addPlatform(0,0,30,8,1,8,0xccbbaa);
-    this.addCheckpoint(0,1,34);
-    // Classroom section
-    this.addPlatform(0,0,40,10,1,20,0xaa9988);
-    const t2=new AngryTeacher(this.scene,-2,0.5,45,2,1.5); this.addObstacle(t2);
-    const t3=new AngryTeacher(this.scene,2,0.5,52,2,1.0); this.addObstacle(t3);
-    // Bouncy desk
-    const bd=new BouncyBed(this.scene,0,0.5,56); this.addObstacle(bd);
-    this.addPlatform(0,0,64,8,1,6,0xccbbaa);
-    this.addPlatform(0,1,72,8,1,6,0xbbaa99);
-    this.addCheckpoint(0,2,74);
-    // Principal's office gauntlet
-    this.addPlatform(0,1,80,10,1,24,0xaa9988);
-    const t4=new AngryTeacher(this.scene,-2,1.5,85,3,1.8); this.addObstacle(t4);
-    const t5=new AngryTeacher(this.scene,2,1.5,92,3,1.3); this.addObstacle(t5);
-    const t6=new AngryTeacher(this.scene,0,1.5,98,4,2.0); this.addObstacle(t6);
-    this.addPlatform(0,1,108,12,1,8,0xddccbb);
-    this.addPortal(0,3,110);
-    // One friend helps
-    this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-3));
+    // Eerste stuk met boze meester
+    this.addPlatform(0,0,14,10,1,20,0x888888);
+    this.addStreetSign(-6,0,16,'Sinaasappelstraat');
+    const t1=new AngryTeacher(this.scene,0,0.5,22,3,1.0); this.addObstacle(t1);
+    // SPEELTUIN 1 - Klimrek en glijbaan
+    this.addPlatform(0,0,30,14,1,14,0x44aa44);
+    this.addStreetSign(6,0,30,'Speeltuin Frambozenstraat');
+    const b1=new BouncyBed(this.scene,-3,0.5,32); this.addObstacle(b1);
+    const b2=new BouncyBed(this.scene,3,0.5,36); this.addObstacle(b2);
+    // Schommel decoratie
+    for(const sx of [-5,5]){
+      const frame=new THREE.Mesh(new THREE.BoxGeometry(0.1,3,2),new THREE.MeshStandardMaterial({color:0xff6600}));
+      frame.position.set(sx,1.5,34); this.scene.add(frame); this.levelObjects.push(frame);
+    }
+    this.addCheckpoint(0,1,40);
+    // Mandarijnstraat
+    this.addPlatform(0,0,46,10,1,10,0x888888);
+    this.addStreetSign(-6,0,46,'Mandarijnstraat');
+    const t2=new AngryTeacher(this.scene,-2,0.5,50,2,1.2); this.addObstacle(t2);
+    // SPEELTUIN 2 - Zandbak en wipwap
+    this.addPlatform(0,0,60,14,1,16,0x44aa44);
+    this.addStreetSign(6,0,60,'Speeltuin Meloenstraat');
+    // Zandbak
+    const zandbak=new THREE.Mesh(new THREE.BoxGeometry(4,0.5,4),new THREE.MeshStandardMaterial({color:0xeedd88,roughness:1}));
+    zandbak.position.set(-5,0.25,62); this.scene.add(zandbak); this.levelObjects.push(zandbak);
+    const rand=new THREE.Mesh(new THREE.BoxGeometry(4.4,0.3,4.4),new THREE.MeshStandardMaterial({color:0x8B4513}));
+    rand.position.set(-5,0.5,62); this.scene.add(rand); this.levelObjects.push(rand);
+    const mp1=new MovingPlatform(this.scene,0,0,65,4,1,3,'x',3,0.8); this.addObstacle(mp1); this.platforms.push(mp1);
+    this.addCheckpoint(0,1,72);
+    // Walnootstraat met boze meesters
+    this.addPlatform(0,0,78,10,1,16,0x888888);
+    this.addStreetSign(-6,0,78,'Walnootstraat');
+    const t3=new AngryTeacher(this.scene,2,0.5,82,3,1.5); this.addObstacle(t3);
+    const t4=new AngryTeacher(this.scene,-2,0.5,88,3,1.3); this.addObstacle(t4);
+    // SPEELTUIN 3 - Eind
+    this.addPlatform(0,1,98,12,1,8,0x44aa44);
+    this.addStreetSign(6,0,98,'Speeltuin Ananasstraat');
+    this.addPlatform(0,2,108,12,1,8,0x44aa44);
+    this.addPortal(0,4,112);
     this.addCloudDeco();
   }
 
-  // ====== LEVEL 4: Het Monster Bos ======
+  // ====== LEVEL 4: De Duinen & Bosjes van Pex ======
   buildMonsterForest() {
-    this.scene.background=new THREE.Color(0x2a1a3a);
-    this.scene.fog=new THREE.FogExp2(0x3a2a4a,0.008);
-    // Dark forest theme
-    this.addPlatform(0,0,0,14,1,10,0x445533);
-    // Trees decoration
-    for(let i=0;i<30;i++){
-      const side=(Math.random()>0.5?1:-1)*(6+Math.random()*8);
+    this.scene.background=new THREE.Color(0x6699cc);
+    this.scene.fog=new THREE.FogExp2(0x8899aa,0.005);
+    // Westduinpark / Bosjes van Pex theme
+    this.addPlatform(0,0,0,14,1,10,0x88aa66);
+    this.addStreetSign(6,0,0,'Bosjes van Pex');
+    // Trees (Bosjes van Pex bos)
+    for(let i=0;i<25;i++){
+      const side=(Math.random()>0.5?1:-1)*(7+Math.random()*8);
       const tz=Math.random()*130;
       const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,4+Math.random()*3,6),new THREE.MeshStandardMaterial({color:0x4a3520}));
       trunk.position.set(side,2,tz); trunk.castShadow=true; this.scene.add(trunk); this.levelObjects.push(trunk);
-      const leaves=new THREE.Mesh(new THREE.SphereGeometry(1.5+Math.random(),8,6),new THREE.MeshStandardMaterial({color:0x225522+Math.floor(Math.random()*0x113311)}));
+      const leaves=new THREE.Mesh(new THREE.SphereGeometry(1.5+Math.random(),8,6),new THREE.MeshStandardMaterial({color:0x336633}));
       leaves.position.set(side,5+Math.random()*2,tz); leaves.castShadow=true; this.scene.add(leaves); this.levelObjects.push(leaves);
     }
-    // Forest path
-    this.addPlatform(0,0,14,10,1,16,0x556644);
-    // First monster - furry bear
+    // Restaurant Pex alongside
+    this.addRestaurant(-12,0,8,'Restaurant Pex',0xddccaa,0x664422);
+    // Bospad met monsters
+    this.addPlatform(0,0,14,10,1,16,0x667755);
     const m1=new BigMonster(this.scene,0,0,24,'furry'); this.addObstacle(m1);
-    this.addPlatform(0,0,34,10,1,8,0x556644);
+    // Schotse Hooglanders (Highland cattle!)
+    this.addHighlandCow(8,0,20);
+    this.addHighlandCow(10,0,35);
+    this.addHighlandCow(-9,0,50);
+    this.addHighlandCow(12,0,75);
+    this.addPlatform(0,0,34,10,1,8,0x667755);
     this.addCheckpoint(0,1,38);
-    // Slimy section
-    this.addPlatform(0,0,44,10,1,20,0x445533);
-    const sl=new SlipperyFloor(this.scene,0,0.52,48,10,6); this.addObstacle(sl);
+    // Duinen sectie - Westduinpark
+    this.addStreetSign(6,0,42,'Westduinpark');
+    this.addPlatform(0,0,44,10,1,20,0xddcc88);
+    // Duinheuvels naast het pad
+    this.addDuneHill(8,0,44,4);
+    this.addDuneHill(-9,0,50,5);
+    this.addDuneHill(10,0,58,3);
+    this.addDuneHill(-8,0,64,4);
+    // Slimy monster in de duinen
     const m2=new BigMonster(this.scene,-3,0,52,'slimy'); this.addObstacle(m2);
     const m3=new BigMonster(this.scene,3,0,58,'slimy'); this.addObstacle(m3);
-    this.addPlatform(0,0,68,8,1,6,0x667755);
+    this.addPlatform(0,0,68,8,1,6,0xddcc88);
     this.addCheckpoint(0,1,70);
-    // Shadow monster canyon
-    this.addPlatform(0,0,76,10,1,20,0x445533);
+    // Atlantikwall bunkers
+    this.addBunker(-8,0,72);
+    this.addBunker(9,0,80);
+    this.addStreetSign(-6,0,76,'Atlantikwall');
+    // Shadow monster bij de bunkers
+    this.addPlatform(0,0,76,10,1,20,0x667755);
     const m4=new BigMonster(this.scene,0,0,82,'shadow'); this.addObstacle(m4);
-    // Platforms over ice monster
-    this.addPlatform(-2,2,92,4,1,4,0x667755);
-    this.addPlatform(2,2,98,4,1,4,0x667755);
+    // Over duinen naar het einde
+    this.addDuneHill(8,0,90,5);
+    this.addDuneHill(-9,0,96,4);
+    this.addPlatform(-2,2,92,5,1,4,0xddcc88);
+    this.addPlatform(2,2,98,5,1,4,0xddcc88);
     const m5=new BigMonster(this.scene,0,0,95,'ice'); this.addObstacle(m5);
     this.addPlatform(0,2,104,12,1,8,0x88aa77);
     this.addPortal(0,4,108);
-    // Friends for courage
+    // Vriendjes
     this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,3));
     this.friends.push(new FriendNPC(this.scene,'Daan',0x44cc44,-3));
-    // Dragon in the forest!
     this.dragon=new FireDragon(this.scene);
     this.addCloudDeco();
   }
 
-  // ====== LEVEL 5: Gekke Papa's Droomhuis ======
+  // ====== LEVEL 5: Kijkduin Strand ======
   buildCrazyDads() {
-    this.scene.background=new THREE.Color(0xffaa55);
-    this.scene.fog=new THREE.FogExp2(0xffcc88,0.004);
-    // Wacky house theme
-    this.addPlatform(0,0,0,14,1,10,0xffccaa);
-    // House walls (tilted for wacky effect)
-    for(let z=10;z<120;z+=6){
-      for(const side of [-6,6]){
-        const wall=new THREE.Mesh(new THREE.BoxGeometry(0.5,5,4),new THREE.MeshStandardMaterial({color:z%12===0?0xff8866:0xffaa88}));
-        wall.position.set(side,2.5,z); wall.rotation.z=(Math.random()-0.5)*0.15; wall.castShadow=true;
-        this.scene.add(wall); this.levelObjects.push(wall);
-      }
-    }
-    // Living room
-    this.addPlatform(0,0,14,12,1,16,0xeeddcc);
-    // Dancing dad
+    this.scene.background=new THREE.Color(0x66aadd);
+    this.scene.fog=new THREE.FogExp2(0x88bbee,0.003);
+    // Beach & boulevard theme
+    this.addBeachSand(0,140);
+    this.addSeaWaves(0,140);
+    // Start - duinen naar strand
+    this.addPlatform(0,0,0,14,1,10,0xddcc88);
+    this.addDuneHill(8,0,4,4);
+    this.addDuneHill(-8,0,8,3);
+    // Boulevard Kijkduin
+    this.addPlatform(0,0,14,12,1,20,0xaaaaaa);
+    this.addStreetSign(6,0,14,'Boulevard Kijkduin');
+    // NH Atlantic Hotel in background
+    this.addHotelNHAtlantic(18,0,20);
+    // Pannenkoekenhuis
+    this.addRestaurant(-12,0,22,'Pannenkoekenhuis',0xffddaa,0xff8844);
+    // Gekke papa's op het strand!
     const d1=new CrazyDad(this.scene,-3,0.5,18,'dancer'); this.addObstacle(d1);
-    // BBQ dad
     const d2=new CrazyDad(this.scene,3,0.5,24,'bbq'); this.addObstacle(d2);
-    this.addCheckpoint(0,1,28);
-    // Kitchen chaos
-    this.addPlatform(0,0,34,12,1,20,0xddccbb);
-    const d3=new CrazyDad(this.scene,0,0.5,40,'spinner'); this.addObstacle(d3);
-    // Bouncy couch section
-    const bb1=new BouncyBed(this.scene,-2,0.5,48); this.addObstacle(bb1);
-    const bb2=new BouncyBed(this.scene,2,0.5,48); this.addObstacle(bb2);
-    // Jumpy dad (acts like trampoline)
-    const d4=new CrazyDad(this.scene,0,0.5,52,'jumper'); this.addObstacle(d4);
-    this.addPlatform(0,0,58,10,1,8,0xeeddcc);
-    this.addCheckpoint(0,1,60);
-    // Garage madness
-    this.addPlatform(0,0,66,12,1,24,0xccbbaa);
-    const d5=new CrazyDad(this.scene,-3,0.5,70,'spinner'); this.addObstacle(d5);
-    const d6=new CrazyDad(this.scene,3,0.5,76,'dancer'); this.addObstacle(d6);
-    const d7=new CrazyDad(this.scene,0,0.5,82,'bbq'); this.addObstacle(d7);
-    // Steps to roof
-    this.addPlatform(0,1,92,8,1,4,0xffaa66);
-    this.addPlatform(0,2.5,98,8,1,4,0xff8844);
-    this.addPlatform(0,4,104,12,1,8,0xffcc88);
-    this.addPortal(0,6,108);
-    // Friends
+    this.addCheckpoint(0,1,30);
+    // Speelboot Medusa!
+    this.addSpeelbootMedusa(12,0,36);
+    this.addStreetSign(-6,0,36,'Speelboot Medusa');
+    // Boulevard verder
+    this.addPlatform(0,0,36,12,1,18,0xaaaaaa);
+    this.addRestaurant(-12,0,40,'Marmaris',0xffeecc,0x884422);
+    this.addRestaurant(14,0,48,'Bakkerij van Kempen',0xffeedd,0x996633);
+    const d3=new CrazyDad(this.scene,0,0.5,42,'spinner'); this.addObstacle(d3);
+    // Strand sectie
+    this.addPlatform(0,0,58,14,1,20,0xeedd99);
+    this.addStreetSign(7,0,58,'Strand Kijkduin');
+    // Bouncy strandstoel
+    const bb1=new BouncyBed(this.scene,-3,0.5,62); this.addObstacle(bb1);
+    const bb2=new BouncyBed(this.scene,3,0.5,66); this.addObstacle(bb2);
+    // Jumpy dad op het strand
+    const d4=new CrazyDad(this.scene,0,0.5,70,'jumper'); this.addObstacle(d4);
+    this.addCheckpoint(0,1,74);
+    // Duinen terug omhoog
+    this.addDuneHill(8,0,80,5);
+    this.addDuneHill(-9,0,86,4);
+    this.addPlatform(0,0,82,12,1,16,0xddcc88);
+    const d5=new CrazyDad(this.scene,-3,0.5,86,'spinner'); this.addObstacle(d5);
+    const d6=new CrazyDad(this.scene,3,0.5,90,'dancer'); this.addObstacle(d6);
+    // Strandtent eind
+    this.addRestaurant(-12,0,96,'Taste of Kijkduin',0xddeeff,0x2266aa);
+    // Omhoog naar de boulevard
+    this.addPlatform(0,1,100,8,1,4,0xaaaaaa);
+    this.addPlatform(0,2.5,106,8,1,4,0xaaaaaa);
+    this.addPlatform(0,4,112,12,1,8,0xeedd99);
+    this.addPortal(0,6,116);
+    // Vriendjes
     this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-4));
     this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,4));
+    this.friends.push(new FriendNPC(this.scene,'Noor',0xffaa00,6));
     this.addHelicopter();
     this.addCloudDeco();
   }
 
   // ====== LEVEL 6: De Grote Finale ======
   buildGrandFinale() {
-    this.scene.background=new THREE.Color(0x6644aa);
-    this.scene.fog=new THREE.FogExp2(0x7755bb,0.003);
-    // Epic rainbow theme
+    this.scene.background=new THREE.Color(0x5588cc);
+    this.scene.fog=new THREE.FogExp2(0x6699cc,0.002);
+    // === DEEL 1: Start bij De Zonnebloem ===
     this.addPlatform(0,0,0,14,1,10,0xaaddaa);
-    // All friends!
+    this.addZonnebloemSchool(10,0,0);
+    this.addStreetSign(-5,0,1,'Hyacinthweg');
+    // All friends join!
     this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-3));
     this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,3));
     this.friends.push(new FriendNPC(this.scene,'Daan',0x44cc44,-5));
     this.friends.push(new FriendNPC(this.scene,'Noor',0xffaa00,5));
-    // Rainbow platforms
+    // === DEEL 2: Door de Vruchtenbuurt ===
+    this.addPlatform(0,0,12,12,1,6,0xddccaa);
+    this.addPlatform(0,0,20,12,1,6,0xddccaa);
+    this.addPlatform(0,0,28,12,1,6,0xddccaa);
+    this.addStreetSign(-5,0,14,'Appelstraat');
+    this.addRestaurant(8,0,18,'Burrata',0xffeedd,0xcc4422);
+    this.addStreetSign(5,0,24,'Druivenstraat');
+    this.addRestaurant(-8,0,26,'Appels & Peren',0xddeecc,0x668833);
+    const t1=new AngryTeacher(this.scene,-2,0.5,16,3,1.2); this.addObstacle(t1);
+    const t2=new AngryTeacher(this.scene,2,0.5,25,3,1.5); this.addObstacle(t2);
+    this.addCheckpoint(0,1,32);
+    // === DEEL 3: Citroenstraat & Speeltuinen ===
+    this.addPlatform(0,0,36,12,1,6,0xccbbaa);
+    this.addPlatform(0,0,44,12,1,6,0xccbbaa);
+    this.addPlatform(0,0,52,12,1,6,0xccbbaa);
+    this.addStreetSign(-5,0,38,'Citroenstraat');
+    this.addStreetSign(5,0,48,'Sinaasappelstraat');
+    // Speeltuin met bouncy beds
+    const bb1=new BouncyBed(this.scene,-3,0.3,42,2,0.3,3); this.addObstacle(bb1);
+    const bb2=new BouncyBed(this.scene,3,0.3,50,2,0.3,3); this.addObstacle(bb2);
+    // Zandbak
+    const zandbak=new THREE.Mesh(new THREE.BoxGeometry(3,0.3,3),new THREE.MeshStandardMaterial({color:0xeedd88,roughness:0.95}));
+    zandbak.position.set(6,0.15,44); this.scene.add(zandbak); this.levelObjects.push(zandbak);
+    const m1=new BigMonster(this.scene,-3,0,46,'slimy'); this.addObstacle(m1);
+    this.addCheckpoint(0,1,56);
+    // === DEEL 4: Duinen & Bosjes van Pex ===
+    this.addPlatform(0,0,60,12,1,6,0x88aa55);
+    this.addPlatform(0,0,68,12,1,6,0x88aa55);
+    this.addPlatform(0,0,76,10,1,6,0x88aa55);
+    this.addDuneHill(-6,0,62,3);
+    this.addDuneHill(7,0,70,4);
+    this.addDuneHill(-8,0,75,2);
+    this.addHighlandCow(-7,0,65);
+    this.addHighlandCow(8,0,72);
+    this.addBunker(8,0,64);
+    this.addRestaurant(-9,0,68,'Restaurant Pex',0xeeddbb,0x446622);
+    this.addStreetSign(-5,0,60,'Westduinpark');
+    // Monsters in het bos
+    const m2=new BigMonster(this.scene,3,0,66,'furry'); this.addObstacle(m2);
+    const m3=new BigMonster(this.scene,-2,0,74,'shadow'); this.addObstacle(m3);
+    this.addCheckpoint(0,1,80);
+    // === DEEL 5: Kijkduin Boulevard ===
+    this.addPlatform(0,0,84,12,1,6,0xddddcc);
+    this.addPlatform(0,0,92,12,1,6,0xddddcc);
+    this.addPlatform(0,0,100,12,1,6,0xddddcc);
+    this.addHotelNHAtlantic(14,0,86);
+    this.addRestaurant(-9,0,90,'Pannenkoekenhuis',0xffeecc,0xaa6622);
+    this.addRestaurant(9,0,96,'Marmaris',0xddffee,0x228844);
+    this.addStreetSign(-5,0,84,'Kijkduin Boulevard');
+    this.addSpeelbootMedusa(-10,-0.5,100);
+    // Crazy dads on the boulevard
+    const d1=new CrazyDad(this.scene,-3,0.5,88,'dancer'); this.addObstacle(d1);
+    const d2=new CrazyDad(this.scene,2,0.5,94,'spinner'); this.addObstacle(d2);
+    const d3=new CrazyDad(this.scene,0,0.5,99,'bbq'); this.addObstacle(d3);
+    // Sea & beach
+    this.addSeaWaves(82,108);
+    this.addBeachSand(82,108);
+    this.addCheckpoint(0,1,104);
+    // === DEEL 6: Finale op het Strand! ===
+    this.addPlatform(0,0,108,12,1,6,0xeedd99);
+    this.addDuneHill(-6,0,110,3);
+    this.addDuneHill(7,0,112,2);
+    // Final ascent – rainbow platforms
     const rainbowColors=[0xff4444,0xff8844,0xffdd44,0x44dd44,0x4488ff,0x8844ff];
-    for(let i=0;i<6;i++) this.addPlatform(0,0,12+i*7,10,1,5,rainbowColors[i]);
-    // Teacher gauntlet
-    const t1=new AngryTeacher(this.scene,-2,0.5,20,3,1.5); this.addObstacle(t1);
-    const t2=new AngryTeacher(this.scene,2,0.5,35,3,1.8); this.addObstacle(t2);
-    this.addCheckpoint(0,1,50);
-    // Zonnebloem school
-    this.addZonnebloemSchool(15,0,55);
-    // Monster section
-    this.addPlatform(0,0,56,12,1,24,0x556644);
-    const m1=new BigMonster(this.scene,-3,0,62,'furry'); this.addObstacle(m1);
-    const m2=new BigMonster(this.scene,3,0,70,'shadow'); this.addObstacle(m2);
-    this.addCheckpoint(0,1,76);
-    // Crazy dad bridge
-    this.addPlatform(0,0,82,12,1,20,0xffccaa);
-    const d1=new CrazyDad(this.scene,-3,0.5,86,'dancer'); this.addObstacle(d1);
-    const d2=new CrazyDad(this.scene,3,0.5,90,'spinner'); this.addObstacle(d2);
-    const d3=new CrazyDad(this.scene,0,0.5,94,'jumper'); this.addObstacle(d3);
-    // Final ascent
-    this.addPlatform(0,2,104,8,1,4,0xffdd44);
-    this.addPlatform(0,4,110,8,1,4,0x44dd44);
-    this.addPlatform(0,6,116,12,1,8,0xffffff);
-    // BOSS MONSTER
-    const boss=new BigMonster(this.scene,0,6,122,'shadow'); this.addObstacle(boss);
-    this.addPlatform(0,6,130,14,1,10,0xffd700);
-    this.addPortal(0,8,134);
+    this.addPlatform(0,1,116,8,1,4,rainbowColors[0]);
+    this.addPlatform(0,2,121,8,1,4,rainbowColors[1]);
+    this.addPlatform(0,3,126,8,1,4,rainbowColors[2]);
+    this.addPlatform(0,4,131,10,1,4,rainbowColors[3]);
+    // BOSS MONSTER on the final platform
+    const boss=new BigMonster(this.scene,0,4,133,'shadow'); this.addObstacle(boss);
+    this.addPlatform(0,5,138,14,1,10,0xffd700);
+    this.addStreetSign(-5,5,136,'Vali\'s Eindstreep!');
+    this.addPortal(0,7,142);
     this.addHelicopter();
-    // EPIC DRAGON for the finale!
+    // EPIC DRAGON over the finale!
     this.dragon=new FireDragon(this.scene);
-    // Epic cloud deco
+    // Decoration
     this.addCloudDeco();
-    // Rainbow arches
-    for(let i=0;i<3;i++){
-      const arch=new THREE.Mesh(new THREE.TorusGeometry(8,0.5,8,24,Math.PI),new THREE.MeshStandardMaterial({color:rainbowColors[i*2],emissive:rainbowColors[i*2],emissiveIntensity:0.3,transparent:true,opacity:0.5}));
-      arch.position.set(0,4,30+i*40); arch.rotation.y=Math.PI/2; this.scene.add(arch); this.levelObjects.push(arch);
+    // Rainbow arches along the route
+    for(let i=0;i<4;i++){
+      const arch=new THREE.Mesh(new THREE.TorusGeometry(8,0.5,8,24,Math.PI),new THREE.MeshStandardMaterial({color:rainbowColors[i%6],emissive:rainbowColors[i%6],emissiveIntensity:0.3,transparent:true,opacity:0.5}));
+      arch.position.set(0,4,20+i*35); arch.rotation.y=Math.PI/2; this.scene.add(arch); this.levelObjects.push(arch);
     }
   }
 
@@ -1250,6 +1362,167 @@ class LevelManager {
       s.position.set((Math.random()-0.5)*60,15+Math.random()*25,Math.random()*140);
       this.scene.add(s);this.levelObjects.push(s);
     }
+  }
+
+  // ====== NEIGHBORHOOD LANDMARK HELPERS ======
+  addStreetSign(x,y,z,text) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,2.5,6),new THREE.MeshStandardMaterial({color:0x333333}));
+    pole.position.y=1.25; g.add(pole);
+    const board=new THREE.Mesh(new THREE.BoxGeometry(Math.max(2,text.length*0.22),0.5,0.08),new THREE.MeshStandardMaterial({color:0x1144aa}));
+    board.position.y=2.5; g.add(board);
+    // White border
+    const border=new THREE.Mesh(new THREE.BoxGeometry(Math.max(2.1,text.length*0.23),0.55,0.06),new THREE.MeshStandardMaterial({color:0xffffff}));
+    border.position.y=2.5; border.position.z=-0.02; g.add(border);
+    this.scene.add(g); this.levelObjects.push(g);
+  }
+  addRestaurant(x,y,z,name,wallColor,roofColor) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    // Building
+    const w=5+Math.random()*2, h=4+Math.random()*2;
+    const wall=new THREE.Mesh(new THREE.BoxGeometry(w,h,5),new THREE.MeshStandardMaterial({color:wallColor||0xffeedd,roughness:0.8}));
+    wall.position.y=h/2; wall.castShadow=true; g.add(wall);
+    // Roof
+    const roof=new THREE.Mesh(new THREE.BoxGeometry(w+0.4,0.4,5.4),new THREE.MeshStandardMaterial({color:roofColor||0x884422}));
+    roof.position.y=h+0.2; g.add(roof);
+    // Door
+    const door=new THREE.Mesh(new THREE.BoxGeometry(1.2,2.2,0.15),new THREE.MeshStandardMaterial({color:0x553311}));
+    door.position.set(0,1.1,2.55); g.add(door);
+    // Windows
+    const winMat=new THREE.MeshStandardMaterial({color:0xffffcc,emissive:0xffdd88,emissiveIntensity:0.4});
+    for(const wx of [-1.5,1.5]){
+      const win=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.9,0.15),winMat);
+      win.position.set(wx,2.5,2.55); g.add(win);
+    }
+    // Sign board with name
+    const sign=new THREE.Mesh(new THREE.BoxGeometry(Math.max(3,name.length*0.28),0.8,0.2),new THREE.MeshStandardMaterial({color:0xcc2222,emissive:0x881111,emissiveIntensity:0.2}));
+    sign.position.set(0,h-0.2,2.6); g.add(sign);
+    // Awning
+    const awning=new THREE.Mesh(new THREE.BoxGeometry(w-0.5,0.1,1.5),new THREE.MeshStandardMaterial({color:0xcc4444}));
+    awning.position.set(0,3,3); awning.rotation.x=0.15; g.add(awning);
+    // Terrace tables
+    for(let i=-1;i<=1;i++){
+      const table=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.05,8),new THREE.MeshStandardMaterial({color:0xdddddd}));
+      table.position.set(i*1.5,0.7,4); g.add(table);
+      const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.7,6),new THREE.MeshStandardMaterial({color:0x888888}));
+      leg.position.set(i*1.5,0.35,4); g.add(leg);
+    }
+    this.scene.add(g); this.levelObjects.push(g);
+  }
+  addDuneHill(x,y,z,size) {
+    const s=size||3;
+    const geo=new THREE.SphereGeometry(s,10,8); geo.scale(1.5,0.5,1.2);
+    const dune=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0xddcc88,roughness:0.95}));
+    dune.position.set(x,y,z); dune.castShadow=true; dune.receiveShadow=true;
+    this.scene.add(dune); this.levelObjects.push(dune);
+    // Marram grass tufts
+    for(let i=0;i<5;i++){
+      const grass=new THREE.Mesh(new THREE.ConeGeometry(0.15,0.6,4),new THREE.MeshStandardMaterial({color:0x668833}));
+      grass.position.set(x+(Math.random()-0.5)*s,y+s*0.4,z+(Math.random()-0.5)*s);
+      this.scene.add(grass); this.levelObjects.push(grass);
+    }
+  }
+  addHighlandCow(x,y,z) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    // Body (shaggy brown)
+    const bodyGeo=new THREE.SphereGeometry(0.8,8,6); bodyGeo.scale(1.5,0.9,0.9);
+    const cowMat=new THREE.MeshStandardMaterial({color:0x8B4513,roughness:1});
+    const body=new THREE.Mesh(bodyGeo,cowMat); body.position.y=0.9; body.castShadow=true; g.add(body);
+    // Head
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6),cowMat);
+    head.position.set(1.1,1.1,0); g.add(head);
+    // Long hair over eyes
+    const hair=new THREE.Mesh(new THREE.SphereGeometry(0.25,6,4),new THREE.MeshStandardMaterial({color:0x6B3410,roughness:1}));
+    hair.position.set(1.2,1.3,0); hair.scale.set(1.2,0.6,1.3); g.add(hair);
+    // Horns
+    for(const side of [-1,1]){
+      const horn=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.5,5),new THREE.MeshStandardMaterial({color:0xddccaa}));
+      horn.position.set(0.9,1.45,side*0.3); horn.rotation.z=side*0.8; g.add(horn);
+    }
+    // Legs
+    const legMat=new THREE.MeshStandardMaterial({color:0x7a3c10});
+    for(const lx of [-0.4,0.4]){for(const lz of [-0.25,0.25]){
+      const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.06,0.7,6),legMat);
+      leg.position.set(lx,0.35,lz); g.add(leg);
+    }}
+    this.scene.add(g); this.levelObjects.push(g);
+  }
+  addSpeelbootMedusa(x,y,z) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    // Hull
+    const hullGeo=new THREE.BoxGeometry(6,1.5,2.5); hullGeo.translate(0,0.75,0);
+    const hull=new THREE.Mesh(hullGeo,new THREE.MeshStandardMaterial({color:0x2244aa,roughness:0.6}));
+    hull.castShadow=true; g.add(hull);
+    // Deck
+    const deck=new THREE.Mesh(new THREE.BoxGeometry(5.5,0.15,2.3),new THREE.MeshStandardMaterial({color:0x8B6914}));
+    deck.position.y=1.5; g.add(deck);
+    // Cabin
+    const cabin=new THREE.Mesh(new THREE.BoxGeometry(2,1.5,1.8),new THREE.MeshStandardMaterial({color:0xcc4444}));
+    cabin.position.set(0,2.25,0); g.add(cabin);
+    // Mast
+    const mast=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,4,6),new THREE.MeshStandardMaterial({color:0x8B6914}));
+    mast.position.set(1.5,3.5,0); g.add(mast);
+    // Flag
+    const flag=new THREE.Mesh(new THREE.PlaneGeometry(1,0.6),new THREE.MeshStandardMaterial({color:0xff6600,side:THREE.DoubleSide}));
+    flag.position.set(1.5,5.2,0.3); g.add(flag);
+    // Slide
+    const slide=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.1,2.5),new THREE.MeshStandardMaterial({color:0xffcc00}));
+    slide.position.set(-2,1,1.5); slide.rotation.x=0.5; slide.rotation.z=0.2; g.add(slide);
+    // Sign: MEDUSA
+    const nameSign=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,0.12),new THREE.MeshStandardMaterial({color:0xffd700}));
+    nameSign.position.set(0,0.5,1.3); g.add(nameSign);
+    this.scene.add(g); this.levelObjects.push(g);
+  }
+  addBunker(x,y,z) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    const bunker=new THREE.Mesh(new THREE.BoxGeometry(3,1.5,3),new THREE.MeshStandardMaterial({color:0x888877,roughness:0.95}));
+    bunker.position.y=0.5; bunker.castShadow=true; g.add(bunker);
+    // Partially buried in sand
+    const sand=new THREE.Mesh(new THREE.SphereGeometry(2.5,8,6),new THREE.MeshStandardMaterial({color:0xddcc88,roughness:1}));
+    sand.position.y=0; sand.scale.set(1.2,0.4,1.2); g.add(sand);
+    // Dark slit opening
+    const slit=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.3,0.2),new THREE.MeshStandardMaterial({color:0x111111}));
+    slit.position.set(0,1,1.55); g.add(slit);
+    this.scene.add(g); this.levelObjects.push(g);
+  }
+  addHotelNHAtlantic(x,y,z) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    // Main building (large)
+    const main=new THREE.Mesh(new THREE.BoxGeometry(14,10,8),new THREE.MeshStandardMaterial({color:0xeeeedd,roughness:0.5}));
+    main.position.y=5; main.castShadow=true; g.add(main);
+    // Windows grid
+    const winMat=new THREE.MeshStandardMaterial({color:0x88bbdd,emissive:0x446688,emissiveIntensity:0.2,roughness:0.1,metalness:0.5});
+    for(let row=0;row<4;row++){for(let col=-5;col<=5;col++){
+      const w=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.8,0.15),winMat);
+      w.position.set(col*1.2,2+row*2.2,4.1); g.add(w);
+    }}
+    // Sign
+    const sign=new THREE.Mesh(new THREE.BoxGeometry(8,1,0.3),new THREE.MeshStandardMaterial({color:0x003366}));
+    sign.position.set(0,9.5,4.2); g.add(sign);
+    // Balconies
+    for(let row=0;row<3;row++){for(let col=-4;col<=4;col+=2){
+      const bal=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.1,0.5),new THREE.MeshStandardMaterial({color:0xcccccc}));
+      bal.position.set(col,1.5+row*2.2,4.3); g.add(bal);
+    }}
+    this.scene.add(g); this.levelObjects.push(g);
+  }
+  addSeaWaves(zStart,zEnd) {
+    // Animated-looking sea surface
+    for(let z=zStart;z<zEnd;z+=3){
+      for(let x=-30;x<-8;x+=4){
+        const wave=new THREE.Mesh(new THREE.BoxGeometry(4+Math.random()*2,0.3,2.5),new THREE.MeshStandardMaterial({color:0x2266aa,roughness:0.3,metalness:0.2,transparent:true,opacity:0.7}));
+        wave.position.set(x,-1+Math.random()*0.3,z); this.scene.add(wave); this.levelObjects.push(wave);
+      }
+    }
+    // Foam
+    for(let z=zStart;z<zEnd;z+=5){
+      const foam=new THREE.Mesh(new THREE.BoxGeometry(3,0.1,1),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.4}));
+      foam.position.set(-8,-0.5,z); this.scene.add(foam); this.levelObjects.push(foam);
+    }
+  }
+  addBeachSand(zStart,zEnd) {
+    const sand=new THREE.Mesh(new THREE.BoxGeometry(25,0.3,zEnd-zStart),new THREE.MeshStandardMaterial({color:0xeedd99,roughness:0.95}));
+    sand.position.set(-15,-0.5,(zStart+zEnd)/2); sand.receiveShadow=true; this.scene.add(sand); this.levelObjects.push(sand);
   }
 
   addObstacle(o) { this.obstacles.push(o); }
@@ -1361,7 +1634,7 @@ class UIManager {
     el.innerHTML=h;document.getElementById('final-score').textContent=this.state.score;
     const bonuses=[];if(this.state.falls===0)bonuses.push('No Falls Bonus: +300');if(this.state.levelTime<this.state.levelDuration*0.5)bonuses.push('Speed Bonus!');
     document.getElementById('bonus-text').textContent=bonuses.join(' | ');
-    const levelNames={1:'Slaapkamer Chaos',2:'Schoolplein met Vriendjes',3:'Boze Meesters',4:'Het Monster Bos',5:"Gekke Papa's Droomhuis",6:'De Grote Finale'};
+    const levelNames={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale'};
     const lct=document.getElementById('level-complete-title');
     if(lct)lct.textContent=`Level ${this.state.currentLevel} Gehaald!`;
     const bnl=document.getElementById('btn-next-level');
@@ -1370,7 +1643,7 @@ class UIManager {
   }
   update(delta) {
     if(!this.state.playing)return;
-    const levelNames={1:'Slaapkamer Chaos',2:'Schoolplein met Vriendjes',3:'Boze Meesters',4:'Het Monster Bos',5:"Gekke Papa's Droomhuis",6:'De Grote Finale'};
+    const levelNames={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale'};
     const ln=document.getElementById('level-name');if(ln)ln.textContent=`Level ${this.state.currentLevel}: ${levelNames[this.state.currentLevel]||'???'}`;
     const tb=document.getElementById('timer-bar');const tl=document.getElementById('timer-label');
     tb.style.width=`${this.state.collapsePercent}%`;
