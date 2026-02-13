@@ -839,6 +839,10 @@ class LevelManager {
 
     // === Zonnebloem School building (naast het pad) ===
     this.addZonnebloemSchool(12, 0, 45);
+    // Droomversies van buurt-winkels in de verte
+    this.addRestaurant(-14,0,30,'Jumbo Droomland',0xffdd00,0xeecc00);
+    this.addRestaurant(14,0,60,'HEMA Speelgoed',0xcc0000,0xaa0000);
+    this.addRestaurant(-14,0,80,'Bakkerij Tichelaar',0xfff5e0,0x996622);
 
     // === SECTION B - gentle run ===
     this.addPlatform(0,0,46,12,1,24,0xeeddcc);
@@ -1043,28 +1047,37 @@ class LevelManager {
     // Appelstraat - winkelstraat
     this.addPlatform(0,0,14,12,1,24,0x888888);
     this.addStreetSign(-5,0,14,'Appelstraat');
-    this.addRestaurant(10,0,18,'Burrata',0xffeedd,0xcc3333);
-    this.addRestaurant(-10,0,28,'Appels & Peren',0xddffdd,0x338833);
+    this.addRestaurant(10,0,16,'Burrata',0xffeedd,0xcc3333);
+    this.addRestaurant(-10,0,22,'Bakkerij Tichelaar',0xfff5e0,0x996622);
+    this.addRestaurant(10,0,28,'Appels & Peren',0xddffdd,0x338833);
+    this.addRestaurant(-10,0,32,'Domino\'s Pizza',0x0055aa,0x003388);
     const b1=new BouncyBed(this.scene,0,0.5,22); this.addObstacle(b1);
     this.addCheckpoint(0,1,32);
     // Vlierboomstraat
     this.addPlatform(0,0,34,10,1,6,0x888888);
     this.addStreetSign(5,0,34,'Vlierboomstraat');
+    this.addRestaurant(-10,0,36,'Kapsalon Vruchtenbuurt',0xeeddff,0x886699);
     // Aardbeistraat - hopscotch
     this.addStreetSign(-5,0,42,'Aardbeistraat');
+    this.addRestaurant(10,0,44,'Albert Heijn',0x00aadd,0x0088aa);
     for(let i=0;i<5;i++) this.addPlatform((i%2===0?-1:1)*1.5,0,42+i*5,4,1,3,0xffcc66);
     // Druivenstraat met winkels
     this.addPlatform(0,0,68,10,1,8,0x888888);
     this.addStreetSign(5,0,68,'Druivenstraat');
-    this.addRestaurant(-10,0,70,'Lunch Op de Hoek',0xffddcc,0x884422);
+    this.addRestaurant(-10,0,68,'Lunch Op de Hoek',0xffddcc,0x884422);
+    this.addRestaurant(10,0,72,'Snackbar De Fruitschaal',0xffeeaa,0xdd8800);
     const mp1=new MovingPlatform(this.scene,0,0,75,5,1,4,'x',4,0.8); this.addObstacle(mp1); this.platforms.push(mp1);
     // Savornin Lohmanplein (winkelcentrum)
     this.addPlatform(0,0,82,12,1,10,0x999999);
     this.addStreetSign(6,0,82,'Savornin Lohmanplein');
-    this.addRestaurant(12,0,84,'HEMA',0xcc0000,0xaa0000);
+    this.addRestaurant(12,0,80,'HEMA',0xcc0000,0xaa0000);
+    this.addRestaurant(-12,0,80,'Jumbo Supermarkt',0xffdd00,0xeecc00);
+    this.addRestaurant(12,0,88,'Apotheek Vruchtenbuurt',0xddffdd,0x228833);
+    this.addRestaurant(-12,0,88,'New York Pizza',0xff6600,0xdd4400);
     this.addCheckpoint(0,1,86);
     // Naar het einde via Perenstraat
     this.addStreetSign(-5,0,92,'Perenstraat');
+    this.addRestaurant(10,0,94,'Bloemist Tulp',0xffccee,0xdd4488);
     this.addPlatform(0,1,94,8,1,6,0x888888);
     this.addPlatform(0,2,102,8,1,6,0x888888);
     this.addPlatform(0,3,110,12,1,8,0x88cc66);
@@ -1093,9 +1106,14 @@ class LevelManager {
         roof.position.set(side*9,4.7,z); roof.rotation.y=Math.PI/4; this.scene.add(roof); this.levelObjects.push(roof);
       }
     }
+    // Winkels langs Citroenstraat
+    this.addRestaurant(12,0,4,'Dirk van den Broek',0xee5500,0xcc3300);
+    this.addRestaurant(-12,0,10,'Grillroom Istanbul',0xffddbb,0xaa6633);
     // Eerste stuk met boze meester
     this.addPlatform(0,0,14,10,1,20,0x888888);
     this.addStreetSign(-6,0,16,'Sinaasappelstraat');
+    this.addRestaurant(12,0,18,'Plus Supermarkt',0x00aa44,0x008833);
+    this.addRestaurant(-12,0,24,'Shoarma Grillroom Pasha',0xffcc88,0xcc6622);
     const t1=new AngryTeacher(this.scene,0,0.5,22,3,1.0); this.addObstacle(t1);
     // SPEELTUIN 1 - Klimrek en glijbaan
     this.addPlatform(0,0,30,14,1,14,0x44aa44);
@@ -1111,6 +1129,8 @@ class LevelManager {
     // Mandarijnstraat
     this.addPlatform(0,0,46,10,1,10,0x888888);
     this.addStreetSign(-6,0,46,'Mandarijnstraat');
+    this.addRestaurant(12,0,46,'Toko Mandarijn',0xffee99,0xdd8811);
+    this.addRestaurant(-12,0,52,'Kringloop De Buurt',0xaaddbb,0x447755);
     const t2=new AngryTeacher(this.scene,-2,0.5,50,2,1.2); this.addObstacle(t2);
     // SPEELTUIN 2 - Zandbak en wipwap
     this.addPlatform(0,0,60,14,1,16,0x44aa44);
@@ -1125,6 +1145,9 @@ class LevelManager {
     // Walnootstraat met boze meesters
     this.addPlatform(0,0,78,10,1,16,0x888888);
     this.addStreetSign(-6,0,78,'Walnootstraat');
+    this.addRestaurant(12,0,78,'Eetcafe De Walnoot',0xeeddbb,0x775533);
+    this.addRestaurant(-12,0,84,'Fietsenmaker Spokes',0xddddee,0x445566);
+    this.addRestaurant(12,0,88,'Dierenwinkel Beestenboel',0xddffcc,0x558833);
     const t3=new AngryTeacher(this.scene,2,0.5,82,3,1.5); this.addObstacle(t3);
     const t4=new AngryTeacher(this.scene,-2,0.5,88,3,1.3); this.addObstacle(t4);
     // SPEELTUIN 3 - Eind
@@ -1153,6 +1176,7 @@ class LevelManager {
     }
     // Restaurant Pex alongside
     this.addRestaurant(-12,0,8,'Restaurant Pex',0xddccaa,0x664422);
+    this.addRestaurant(12,0,12,'Pannenkoekenrestaurant',0xffeecc,0xbb7733);
     // Bospad met monsters
     this.addPlatform(0,0,14,10,1,16,0x667755);
     const m1=new BigMonster(this.scene,0,0,24,'furry'); this.addObstacle(m1);
@@ -1180,17 +1204,18 @@ class LevelManager {
     this.addBunker(-8,0,72);
     this.addBunker(9,0,80);
     this.addStreetSign(-6,0,76,'Atlantikwall');
+    this.addRestaurant(12,0,76,'Beachclub Woodstock 69',0xddcc99,0x887744);
     // Shadow monster bij de bunkers
     this.addPlatform(0,0,76,10,1,20,0x667755);
     const m4=new BigMonster(this.scene,0,0,82,'shadow'); this.addObstacle(m4);
     // Over duinen naar het einde
     this.addDuneHill(8,0,90,5);
     this.addDuneHill(-9,0,96,4);
-    this.addPlatform(-2,2,92,5,1,4,0xddcc88);
-    this.addPlatform(2,2,98,5,1,4,0xddcc88);
-    const m5=new BigMonster(this.scene,0,0,95,'ice'); this.addObstacle(m5);
-    this.addPlatform(0,2,104,12,1,8,0x88aa77);
-    this.addPortal(0,4,108);
+    this.addPlatform(0,0,90,12,1,8,0xddcc88);
+    this.addPlatform(0,0.5,100,12,1,8,0xddcc88);
+    this.addRestaurant(-12,0,94,'Strandpaviljoen Pex',0xeeddbb,0x665533);
+    this.addPlatform(0,1,108,14,1,10,0x88aa77);
+    this.addPortal(0,3,112);
     // Vriendjes
     this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,3));
     this.friends.push(new FriendNPC(this.scene,'Daan',0x44cc44,-3));
@@ -1217,6 +1242,8 @@ class LevelManager {
     // Pannenkoekenhuis
     this.addRestaurant(-12,0,22,'Pannenkoekenhuis',0xffddaa,0xff8844);
     // Gekke papa's op het strand!
+    this.addRestaurant(14,0,16,'Freddy\'s IJssalon',0xccffff,0x44aacc);
+    this.addRestaurant(-14,0,28,'Da Giovanni',0xffeedd,0xcc4433);
     const d1=new CrazyDad(this.scene,-3,0.5,18,'dancer'); this.addObstacle(d1);
     const d2=new CrazyDad(this.scene,3,0.5,24,'bbq'); this.addObstacle(d2);
     this.addCheckpoint(0,1,30);
@@ -1225,8 +1252,10 @@ class LevelManager {
     this.addStreetSign(-6,0,36,'Speelboot Medusa');
     // Boulevard verder
     this.addPlatform(0,0,36,12,1,18,0xaaaaaa);
-    this.addRestaurant(-12,0,40,'Marmaris',0xffeecc,0x884422);
-    this.addRestaurant(14,0,48,'Bakkerij van Kempen',0xffeedd,0x996633);
+    this.addRestaurant(-14,0,36,'Marmaris',0xffeecc,0x884422);
+    this.addRestaurant(14,0,40,'Bakkerij van Kempen',0xffeedd,0x996633);
+    this.addRestaurant(-14,0,44,'De Kijkduinse Strandtent',0xddeeff,0x335588);
+    this.addRestaurant(14,0,48,'McDonald\'s',0xffcc00,0xdd2200);
     const d3=new CrazyDad(this.scene,0,0.5,42,'spinner'); this.addObstacle(d3);
     // Strand sectie
     this.addPlatform(0,0,58,14,1,20,0xeedd99);
@@ -1244,7 +1273,9 @@ class LevelManager {
     const d5=new CrazyDad(this.scene,-3,0.5,86,'spinner'); this.addObstacle(d5);
     const d6=new CrazyDad(this.scene,3,0.5,90,'dancer'); this.addObstacle(d6);
     // Strandtent eind
-    this.addRestaurant(-12,0,96,'Taste of Kijkduin',0xddeeff,0x2266aa);
+    this.addRestaurant(-14,0,92,'Taste of Kijkduin',0xddeeff,0x2266aa);
+    this.addRestaurant(14,0,96,'Beachclub The Shore',0xeeffdd,0x449955);
+    this.addRestaurant(-14,0,100,'Vishandel Kijkduin',0xccddee,0x336677);
     // Omhoog naar de boulevard
     this.addPlatform(0,1,100,8,1,4,0xaaaaaa);
     this.addPlatform(0,2.5,106,8,1,4,0xaaaaaa);
@@ -1276,9 +1307,11 @@ class LevelManager {
     this.addPlatform(0,0,20,12,1,6,0xddccaa);
     this.addPlatform(0,0,28,12,1,6,0xddccaa);
     this.addStreetSign(-5,0,14,'Appelstraat');
-    this.addRestaurant(8,0,18,'Burrata',0xffeedd,0xcc4422);
+    this.addRestaurant(8,0,14,'Burrata',0xffeedd,0xcc4422);
+    this.addRestaurant(-8,0,20,'Bakkerij Tichelaar',0xfff5e0,0x996622);
     this.addStreetSign(5,0,24,'Druivenstraat');
-    this.addRestaurant(-8,0,26,'Appels & Peren',0xddeecc,0x668833);
+    this.addRestaurant(8,0,26,'Jumbo Supermarkt',0xffdd00,0xeecc00);
+    this.addRestaurant(-8,0,28,'Appels & Peren',0xddeecc,0x668833);
     const t1=new AngryTeacher(this.scene,-2,0.5,16,3,1.2); this.addObstacle(t1);
     const t2=new AngryTeacher(this.scene,2,0.5,25,3,1.5); this.addObstacle(t2);
     this.addCheckpoint(0,1,32);
@@ -1317,8 +1350,11 @@ class LevelManager {
     this.addPlatform(0,0,92,12,1,6,0xddddcc);
     this.addPlatform(0,0,100,12,1,6,0xddddcc);
     this.addHotelNHAtlantic(14,0,86);
-    this.addRestaurant(-9,0,90,'Pannenkoekenhuis',0xffeecc,0xaa6622);
-    this.addRestaurant(9,0,96,'Marmaris',0xddffee,0x228844);
+    this.addRestaurant(-9,0,86,'Freddy\'s IJssalon',0xccffff,0x44aacc);
+    this.addRestaurant(-9,0,92,'Pannenkoekenhuis',0xffeecc,0xaa6622);
+    this.addRestaurant(9,0,92,'Da Giovanni',0xffeedd,0xcc4433);
+    this.addRestaurant(9,0,98,'Marmaris',0xddffee,0x228844);
+    this.addRestaurant(-9,0,98,'Beachclub The Shore',0xeeffdd,0x449955);
     this.addStreetSign(-5,0,84,'Kijkduin Boulevard');
     this.addSpeelbootMedusa(-10,-0.5,100);
     // Crazy dads on the boulevard
