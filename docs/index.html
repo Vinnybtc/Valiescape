@@ -510,8 +510,8 @@ class FriendNPC {
     const head=new THREE.Mesh(new THREE.SphereGeometry(0.22,10,8),new THREE.MeshStandardMaterial({color:0xffcc99}));
     head.position.y=0.9; head.castShadow=true; g.add(head);
     const eMat=new THREE.MeshStandardMaterial({color:0x222222});
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.035,6,6),eMat),{position:new THREE.Vector3(-0.07,0.95,0.18)}));
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.035,6,6),eMat),{position:new THREE.Vector3(0.07,0.95,0.18)}));
+    const fle=new THREE.Mesh(new THREE.SphereGeometry(0.035,6,6),eMat); fle.position.set(-0.07,0.95,0.18); g.add(fle);
+    const fre=new THREE.Mesh(new THREE.SphereGeometry(0.035,6,6),eMat); fre.position.set(0.07,0.95,0.18); g.add(fre);
     const smile=new THREE.Mesh(new THREE.TorusGeometry(0.05,0.012,4,8,Math.PI),new THREE.MeshStandardMaterial({color:0xff6666}));
     smile.position.set(0,0.84,0.19); smile.rotation.z=Math.PI; g.add(smile);
     this.lArm=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.35,6),new THREE.MeshStandardMaterial({color:bodyColor}));
@@ -547,8 +547,8 @@ class AngryTeacher extends Obstacle {
     head.position.y=1.65; head.castShadow=true; g.add(head);
     // Angry eyes
     const eMat=new THREE.MeshStandardMaterial({color:0xcc0000});
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),eMat),{position:new THREE.Vector3(-0.1,1.7,0.25)}));
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),eMat),{position:new THREE.Vector3(0.1,1.7,0.25)}));
+    const tle=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),eMat); tle.position.set(-0.1,1.7,0.25); g.add(tle);
+    const tre=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6),eMat); tre.position.set(0.1,1.7,0.25); g.add(tre);
     // Angry eyebrows
     const brow=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.04,0.04),new THREE.MeshStandardMaterial({color:0x222222}));
     const lb=brow.clone(); lb.position.set(-0.1,1.8,0.25); lb.rotation.z=0.3; g.add(lb);
@@ -587,8 +587,8 @@ class BigMonster extends Obstacle {
     const re=le.clone(); re.position.set(0.5,2.8,1.2); g.add(re);
     // Pupils
     const pupMat=new THREE.MeshStandardMaterial({color:0x111111});
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),pupMat),{position:new THREE.Vector3(-0.5,2.8,1.45)}));
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),pupMat),{position:new THREE.Vector3(0.5,2.8,1.45)}));
+    const mlp=new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),pupMat); mlp.position.set(-0.5,2.8,1.45); g.add(mlp);
+    const mrp=new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),pupMat); mrp.position.set(0.5,2.8,1.45); g.add(mrp);
     // Mouth
     const mouth=new THREE.Mesh(new THREE.BoxGeometry(1,0.4,0.3),new THREE.MeshStandardMaterial({color:0x220000}));
     mouth.position.set(0,2,1.3); g.add(mouth);
@@ -643,8 +643,8 @@ class CrazyDad extends Obstacle {
     stache.position.set(0,1.3,0.28); g.add(stache);
     // Goofy eyes
     const eMat=new THREE.MeshStandardMaterial({color:0x222222});
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),eMat),{position:new THREE.Vector3(-0.1,1.45,0.25)}));
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),eMat),{position:new THREE.Vector3(0.1,1.45,0.25)}));
+    const dle=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),eMat); dle.position.set(-0.1,1.45,0.25); g.add(dle);
+    const dre=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),eMat); dre.position.set(0.1,1.45,0.25); g.add(dre);
     // Big grin
     const grin=new THREE.Mesh(new THREE.TorusGeometry(0.1,0.02,4,8,Math.PI),new THREE.MeshStandardMaterial({color:0xff4444}));
     grin.position.set(0,1.25,0.26); grin.rotation.z=Math.PI; g.add(grin);
@@ -704,15 +704,15 @@ class FireDragon {
     snout.position.set(4.8,0.3,0); snout.rotation.z=-Math.PI/2; g.add(snout);
     // Nostrils (glowing orange)
     const nostrilMat=new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:0.8});
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.08,6,4),nostrilMat),{position:new THREE.Vector3(5.3,0.4,0.15)}));
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.08,6,4),nostrilMat),{position:new THREE.Vector3(5.3,0.4,-0.15)}));
+    const ln=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,4),nostrilMat); ln.position.set(5.3,0.4,0.15); g.add(ln);
+    const rn=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,4),nostrilMat); rn.position.set(5.3,0.4,-0.15); g.add(rn);
     // Eyes (yellow with slit pupils)
     const eyeMat=new THREE.MeshStandardMaterial({color:0xffcc00,emissive:0xff8800,emissiveIntensity:0.5});
     const le=new THREE.Mesh(new THREE.SphereGeometry(0.2,8,8),eyeMat); le.position.set(3.8,1,0.6); g.add(le);
     const re=le.clone(); re.position.set(3.8,1,-0.6); g.add(re);
     const pupMat=new THREE.MeshStandardMaterial({color:0x111111});
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.08,4,4),pupMat),{position:new THREE.Vector3(3.95,1,0.7)}));
-    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(0.08,4,4),pupMat),{position:new THREE.Vector3(3.95,1,-0.7)}));
+    const dlp=new THREE.Mesh(new THREE.SphereGeometry(0.08,4,4),pupMat); dlp.position.set(3.95,1,0.7); g.add(dlp);
+    const drp=new THREE.Mesh(new THREE.SphereGeometry(0.08,4,4),pupMat); drp.position.set(3.95,1,-0.7); g.add(drp);
     // Horns
     const hornMat=new THREE.MeshStandardMaterial({color:0x444444,roughness:0.5});
     const lh=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.8,5),hornMat); lh.position.set(3.2,1.3,0.4); lh.rotation.z=0.3; g.add(lh);
