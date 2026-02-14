@@ -48,6 +48,10 @@
     #touch-jump { right: 20px; bottom: 20px; width: 85px; height: 85px; font-size: 1.2rem; background: rgba(100,200,255,0.3); border-color: rgba(100,200,255,0.6); }
     #touch-dance { right: 20px; bottom: 120px; width: 65px; height: 65px; font-size: 0.9rem; background: rgba(200,100,255,0.3); border-color: rgba(200,100,255,0.6); }
     #touch-forward { left: 65px; bottom: 100px; width: 60px; height: 60px; }
+    #music-btn { position: absolute; top: 15px; right: 15px; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.3); color: white; font-size: 1.3rem; cursor: pointer; z-index: 200; display: flex; align-items: center; justify-content: center; pointer-events: auto; transition: all 0.2s; }
+    #music-btn:hover { background: rgba(0,0,0,0.6); transform: scale(1.1); }
+    #music-btn.playing { border-color: rgba(100,255,100,0.6); background: rgba(0,100,0,0.4); }
+    #spotify-player { position: absolute; top: 65px; right: 15px; z-index: 200; display: none; border-radius: 12px; overflow: hidden; pointer-events: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
     @media (pointer: coarse), (max-width: 1024px) {
       #touch-controls { display: block !important; }
       #controls-hint { display: none !important; }
@@ -113,6 +117,10 @@
           <button id="btn-gameover-menu" class="menu-btn">Menu</button>
         </div>
       </div>
+    </div>
+    <button id="music-btn" title="Nostalgie - JOB">&#9835;</button>
+    <div id="spotify-player">
+      <iframe src="https://open.spotify.com/embed/track/70QBnYP5lr1nhF3isSOJfj?utm_source=generator&theme=0" width="300" height="80" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" style="border-radius:12px;"></iframe>
     </div>
   </div>
 
@@ -912,6 +920,9 @@ class LevelManager {
     this.addPlatform(0,3,106,12,1,8,0xddffdd);
     this.addPortal(0,5,108);
 
+    // Aap met bananenpizza naast het pad!
+    this.addMonkeyWithPizza(6,1,50);
+
     // === Helicopter flying around ===
     this.addHelicopter();
 
@@ -1327,6 +1338,9 @@ class LevelManager {
     this.addPlatform(0,2.5,106,8,1,4,0xaaaaaa);
     this.addPlatform(0,4,112,12,1,8,0xeedd99);
     this.addPortal(0,6,116);
+    // Aap met bananenpizza op het strand!
+    this.addMonkeyWithPizza(-5,1,60);
+    this.addMonkeyWithPizza(5,1,88);
     // Vriendjes
     this.friends.push(new FriendNPC(this.scene,'Sem',0x4488ff,-4));
     this.friends.push(new FriendNPC(this.scene,'Luna',0xff44aa,4));
@@ -1607,6 +1621,81 @@ class LevelManager {
     sand.position.set(-15,-0.5,(zStart+zEnd)/2); sand.receiveShadow=true; this.scene.add(sand); this.levelObjects.push(sand);
   }
 
+  addMonkeyWithPizza(x,y,z) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    // Brown furry body
+    const bodyMat=new THREE.MeshStandardMaterial({color:0x8B5A2B,roughness:0.9});
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.25,0.7,8),bodyMat);
+    body.position.y=0.35; body.castShadow=true; g.add(body);
+    // Belly (lighter)
+    const belly=new THREE.Mesh(new THREE.SphereGeometry(0.22,8,6),new THREE.MeshStandardMaterial({color:0xD2A679,roughness:0.9}));
+    belly.position.set(0,0.3,0.12); g.add(belly);
+    // Head
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.25,10,8),bodyMat);
+    head.position.y=0.9; head.castShadow=true; g.add(head);
+    // Face (lighter patch)
+    const face=new THREE.Mesh(new THREE.SphereGeometry(0.18,8,6),new THREE.MeshStandardMaterial({color:0xD2A679}));
+    face.position.set(0,0.85,0.12); g.add(face);
+    // Eyes
+    const eMat=new THREE.MeshStandardMaterial({color:0x111111});
+    const le=new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6),eMat); le.position.set(-0.08,0.93,0.2); g.add(le);
+    const re=new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6),eMat); re.position.set(0.08,0.93,0.2); g.add(re);
+    // Big monkey grin
+    const grin=new THREE.Mesh(new THREE.TorusGeometry(0.07,0.015,4,8,Math.PI),new THREE.MeshStandardMaterial({color:0xff6666}));
+    grin.position.set(0,0.8,0.2); grin.rotation.z=Math.PI; g.add(grin);
+    // Ears
+    const earMat=new THREE.MeshStandardMaterial({color:0xD2A679});
+    const lear=new THREE.Mesh(new THREE.SphereGeometry(0.1,6,6),earMat); lear.position.set(-0.24,0.92,0); g.add(lear);
+    const rear=new THREE.Mesh(new THREE.SphereGeometry(0.1,6,6),earMat); rear.position.set(0.24,0.92,0); g.add(rear);
+    // Tail (curly)
+    const tailCurve=new THREE.TorusGeometry(0.2,0.03,6,12,Math.PI*1.5);
+    const tail=new THREE.Mesh(tailCurve,bodyMat);
+    tail.position.set(0,0.4,-0.25); tail.rotation.y=Math.PI/2; g.add(tail);
+    // Arms holding pizza
+    const armMat=new THREE.MeshStandardMaterial({color:0x8B5A2B});
+    const la=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.04,0.35,6),armMat);
+    la.position.set(-0.28,0.45,0.15); la.rotation.z=0.6; la.rotation.x=-0.5; g.add(la);
+    const ra=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.04,0.35,6),armMat);
+    ra.position.set(0.28,0.45,0.15); ra.rotation.z=-0.6; ra.rotation.x=-0.5; g.add(ra);
+    // === BANANA PIZZA ===
+    const pizzaGroup=new THREE.Group();
+    // Pizza base (round dough)
+    const dough=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,0.05,12),new THREE.MeshStandardMaterial({color:0xE8C872,roughness:0.8}));
+    pizzaGroup.add(dough);
+    // Tomato sauce layer
+    const sauce=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.02,12),new THREE.MeshStandardMaterial({color:0xcc3300}));
+    sauce.position.y=0.03; pizzaGroup.add(sauce);
+    // Cheese layer
+    const cheese=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,0.02,12),new THREE.MeshStandardMaterial({color:0xffdd44,roughness:0.6}));
+    cheese.position.y=0.05; pizzaGroup.add(cheese);
+    // Banana slices on top!
+    const bananaMat=new THREE.MeshStandardMaterial({color:0xFFE135});
+    for(let i=0;i<6;i++){
+      const angle=i*(Math.PI*2/6);
+      const bSlice=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.03,8),bananaMat);
+      bSlice.position.set(Math.cos(angle)*0.15,0.07,Math.sin(angle)*0.15);
+      pizzaGroup.add(bSlice);
+    }
+    // Center banana slice
+    const centerB=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.03,8),bananaMat);
+    centerB.position.y=0.07; pizzaGroup.add(centerB);
+    // Whole banana on the side
+    const bananaCurve=new THREE.TorusGeometry(0.15,0.04,6,12,Math.PI*0.8);
+    const banana=new THREE.Mesh(bananaCurve,new THREE.MeshStandardMaterial({color:0xFFE135,roughness:0.5}));
+    banana.position.set(0.25,0.06,0); banana.rotation.x=Math.PI/2; pizzaGroup.add(banana);
+    pizzaGroup.position.set(0,0.35,0.3); pizzaGroup.rotation.x=-0.3;
+    g.add(pizzaGroup);
+    // Legs
+    const legMat=new THREE.MeshStandardMaterial({color:0x8B5A2B});
+    const ll=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.05,0.25,6),legMat); ll.position.set(-0.1,-0.05,0); g.add(ll);
+    const rl=ll.clone(); rl.position.set(0.1,-0.05,0); g.add(rl);
+    // Animate: store ref for bobbing
+    g.userData={phase:Math.random()*Math.PI*2,pizzaGroup};
+    this.scene.add(g); this.levelObjects.push(g);
+    // Add to a monkey list for animation
+    if(!this._monkeys) this._monkeys=[];
+    this._monkeys.push(g);
+  }
   addObstacle(o) { this.obstacles.push(o); }
   update(delta) {
     if(this.state.levelComplete||this.state.gameOver)return;
@@ -1616,6 +1705,7 @@ class LevelManager {
     this.checkPlatformCollisions(); this.checkCheckpoints(); this.checkPortal(); this.checkObstacleCollisions(delta);
     if(this.portal){this.portal.ring.rotation.z+=delta*1.5;this.portal.inner.opacity=0.4+Math.sin(Date.now()*0.003)*0.2;this.particles.spawnPortalParticles(this.portal.position,1);}
     for(const f of this.friends) f.update(delta, this.character.position);
+    if(this._monkeys){for(const m of this._monkeys){m.userData.phase+=delta*2;m.position.y+=Math.sin(m.userData.phase)*0.002;m.rotation.y=Math.sin(m.userData.phase*0.5)*0.3;if(m.userData.pizzaGroup)m.userData.pizzaGroup.rotation.y+=delta*0.5;}}
     if(this.dragon) this.dragon.update(delta, this.character.position);
     if(this.helicopter){
       this.heliPhase+=delta*0.4;
@@ -1687,7 +1777,7 @@ class LevelManager {
     for(const o of this.obstacles)if(o.cleanup)o.cleanup();
     for(const f of this.friends) f.cleanup();
     if(this.dragon){this.dragon.cleanup();this.dragon=null;}
-    this.levelObjects=[];this.platforms=[];this.obstacles=[];this.checkpoints=[];this.portal=null;this.collapsingPlatforms=[];this._collapseStarted=false;
+    this.levelObjects=[];this.platforms=[];this.obstacles=[];this.checkpoints=[];this.portal=null;this.collapsingPlatforms=[];this._collapseStarted=false;this._monkeys=[];
     this.friends=[];this.helicopter=null;this.heliRotor=null;this.tailRotor=null;this.heliPhase=0;
   }
 }
@@ -1836,6 +1926,18 @@ try {
 }
 </script>
 <script>
+// Music toggle for Nostalgie - JOB
+(function(){
+  var btn=document.getElementById('music-btn');
+  var player=document.getElementById('spotify-player');
+  var open=false;
+  btn.addEventListener('click',function(){
+    open=!open;
+    player.style.display=open?'block':'none';
+    btn.classList.toggle('playing',open);
+    btn.innerHTML=open?'&#9835;&#9834;':'&#9835;';
+  });
+})();
 // Fallback: if module fails to load, show error and make Play retry
 window.addEventListener('DOMContentLoaded', function() {
   setTimeout(function() {
