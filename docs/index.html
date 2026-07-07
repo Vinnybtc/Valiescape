@@ -857,17 +857,114 @@ class FireDragon {
   }
 }
 
+// ============ Sky Bison (Appa) – Avatar: The Last Airbender ============
+// Decorative flying air bison that circles above the Air Temple level.
+class SkyBison {
+  constructor(scene, opts={}) {
+    this.scene=scene;
+    this.phase=opts.phase||0;
+    this.baseY=opts.baseY!==undefined?opts.baseY:22;
+    this.radius=opts.radius!==undefined?opts.radius:24;
+    this.speed=opts.speed!==undefined?opts.speed:0.25;
+    this.centerZ=opts.centerZ!==undefined?opts.centerZ:50;
+    this.legs=[];
+    const g=new THREE.Group();
+    const fur=new THREE.MeshStandardMaterial({color:0xf3f0e6,roughness:0.95});
+    const arrow=new THREE.MeshStandardMaterial({color:0x8a6a4a,roughness:0.9});
+    const dark=new THREE.MeshStandardMaterial({color:0x2a2320});
+    // Body (head toward +x)
+    const bodyGeo=new THREE.SphereGeometry(2.2,12,10); bodyGeo.scale(2.2,1.0,1.15);
+    const body=new THREE.Mesh(bodyGeo,fur); body.castShadow=true; g.add(body);
+    // Head
+    const headGeo=new THREE.SphereGeometry(1.4,12,10); headGeo.scale(1.15,1.0,1.1);
+    const head=new THREE.Mesh(headGeo,fur); head.position.set(4.5,0.3,0); head.castShadow=true; g.add(head);
+    const snout=new THREE.Mesh(new THREE.SphereGeometry(0.85,10,8),fur); snout.scale.set(1.0,0.7,0.95); snout.position.set(5.7,-0.2,0); g.add(snout);
+    for(const s of [-1,1]){
+      const horn=new THREE.Mesh(new THREE.ConeGeometry(0.32,1.0,4),new THREE.MeshStandardMaterial({color:0xece7d8,roughness:0.6}));
+      horn.position.set(4.3,1.5,s*0.7); horn.rotation.z=-0.2; g.add(horn);
+      const eye=new THREE.Mesh(new THREE.SphereGeometry(0.2,8,8),dark); eye.position.set(5.3,0.3,s*0.7); g.add(eye);
+    }
+    // Brown arrow markings (head + back), Appa's signature
+    const headArrow=new THREE.Mesh(new THREE.ConeGeometry(0.45,1.0,3),arrow); headArrow.position.set(5.1,1.1,0); headArrow.rotation.z=Math.PI/2; g.add(headArrow);
+    const backStripe=new THREE.Mesh(new THREE.BoxGeometry(6.2,0.2,0.8),arrow); backStripe.position.set(0.3,1.95,0); g.add(backStripe);
+    // Six legs
+    for(const xL of [3.0,0,-3.0]){for(const s of [-1,1]){
+      const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.72,1.7,8),fur); leg.position.set(xL,-1.7,s*1.5); leg.castShadow=true; g.add(leg);
+      const paw=new THREE.Mesh(new THREE.SphereGeometry(0.72,8,6),fur); paw.scale.set(1,0.6,1.1); paw.position.set(xL,-2.5,s*1.5); g.add(paw);
+      this.legs.push(leg);
+    }}
+    // Big flat beaver-like tail
+    const tail=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.5,2.4),fur); tail.position.set(-4.9,0.2,0); tail.rotation.z=0.28; tail.castShadow=true; g.add(tail);
+    const tailStripe=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.16,0.7),arrow); tailStripe.position.set(-4.9,0.5,0); tailStripe.rotation.z=0.28; g.add(tailStripe);
+    g.position.set(0,this.baseY,this.centerZ);
+    g.scale.setScalar(opts.scale!==undefined?opts.scale:1);
+    scene.add(g); this.mesh=g;
+  }
+  update(delta) {
+    this.phase+=delta*this.speed;
+    this.mesh.position.x=Math.sin(this.phase)*this.radius;
+    this.mesh.position.z=this.centerZ+Math.cos(this.phase)*this.radius;
+    this.mesh.position.y=this.baseY+Math.sin(this.phase*1.5)*1.5;
+    this.mesh.rotation.y=this.phase;
+    for(let i=0;i<this.legs.length;i++)this.legs[i].rotation.x=Math.sin(this.phase*3+i)*0.2;
+  }
+  cleanup() { this.scene.remove(this.mesh); this.mesh.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}); }
+}
+
+// Rideable air bison – a moving platform shaped like Appa; stand on the saddle to cross a chasm.
+class RideableSkyBison extends Obstacle {
+  constructor(scene,x,y,z,axis='x',range=2,speed=0.7) {
+    const g=new THREE.Group();
+    const fur=new THREE.MeshStandardMaterial({color:0xf3f0e6,roughness:0.95});
+    const arrow=new THREE.MeshStandardMaterial({color:0x8a6a4a,roughness:0.9});
+    const dark=new THREE.MeshStandardMaterial({color:0x2a2320});
+    const SW=3.6,SH=0.4,SD=4.4;
+    // Saddle = standing surface, its TOP sits at local y=0 (world y = group.position.y)
+    const saddle=new THREE.Mesh(new THREE.BoxGeometry(SW,SH,SD),new THREE.MeshStandardMaterial({color:0xc76b2a,roughness:0.8}));
+    saddle.position.y=-SH/2; saddle.receiveShadow=true; g.add(saddle);
+    // Body below the saddle
+    const bodyGeo=new THREE.SphereGeometry(2.1,12,10); bodyGeo.scale(1.7,0.85,1.05);
+    const body=new THREE.Mesh(bodyGeo,fur); body.position.y=-1.5; body.castShadow=true; g.add(body);
+    // Head (forward = +z)
+    const headGeo=new THREE.SphereGeometry(1.25,12,10); headGeo.scale(1.1,1.0,1.15);
+    const head=new THREE.Mesh(headGeo,fur); head.position.set(0,-0.9,2.9); head.castShadow=true; g.add(head);
+    const snout=new THREE.Mesh(new THREE.SphereGeometry(0.7,10,8),fur); snout.scale.set(1.0,0.7,0.9); snout.position.set(0,-1.3,3.8); g.add(snout);
+    for(const s of [-1,1]){
+      const horn=new THREE.Mesh(new THREE.ConeGeometry(0.28,0.9,4),new THREE.MeshStandardMaterial({color:0xece7d8,roughness:0.6}));
+      horn.position.set(s*0.6,0.1,2.9); horn.rotation.x=0.2; g.add(horn);
+      const eye=new THREE.Mesh(new THREE.SphereGeometry(0.16,8,8),dark); eye.position.set(s*0.55,-0.7,3.7); g.add(eye);
+    }
+    const headArrow=new THREE.Mesh(new THREE.ConeGeometry(0.4,0.9,3),arrow); headArrow.position.set(0,-0.2,3.2); headArrow.rotation.x=-Math.PI*0.3; g.add(headArrow);
+    // Six legs
+    for(const zL of [1.6,-0.2,-2.0]){for(const s of [-1,1]){
+      const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.6,1.3,8),fur); leg.position.set(s*1.5,-2.6,zL); leg.castShadow=true; g.add(leg);
+      const paw=new THREE.Mesh(new THREE.SphereGeometry(0.55,8,6),fur); paw.scale.set(1,0.6,1.1); paw.position.set(s*1.5,-3.2,zL); g.add(paw);
+    }}
+    // Big flat tail (at -z)
+    const tail=new THREE.Mesh(new THREE.BoxGeometry(2.2,0.45,2.0),fur); tail.position.set(0,-1.3,-3.4); tail.rotation.x=-0.25; tail.castShadow=true; g.add(tail);
+    super(g,scene,'platform');
+    this.originX=x;this.originY=y;this.originZ=z;this.axis=axis;this.range=range;this.speed=speed;this.phase=0;this.w=SW;this.d=SD;
+    g.position.set(x,y,z);
+  }
+  update(delta) {
+    this.phase+=delta*this.speed; const off=Math.sin(this.phase)*this.range;
+    if(this.axis==='z')this.mesh.position.z=this.originZ+off; else this.mesh.position.x=this.originX+off;
+    this.mesh.position.y=this.originY+Math.sin(this.phase*2)*0.15; // gentle float
+  }
+  getBounds() { const p=this.mesh.position; return{minX:p.x-this.w/2,maxX:p.x+this.w/2,minY:p.y-0.6,maxY:p.y,minZ:p.z-this.d/2,maxZ:p.z+this.d/2}; }
+}
+
 // ============ LevelManager ============
 class LevelManager {
   constructor(scene,state,character,audio,particles) {
     this.scene=scene;this.state=state;this.character=character;this.audio=audio;this.particles=particles;
     this.obstacles=[];this.platforms=[];this.checkpoints=[];this.portal=null;this.levelObjects=[];this.collapsingPlatforms=[];this.alarmTickTimer=0;
     this.friends=[];this.helicopter=null;this.heliRotor=null;this.tailRotor=null;this.heliPhase=0;
-    this.dragon=null;
+    this.dragon=null;this.skyBisons=[];
   }
   loadLevel(n) {
     this.state.currentLevel=n;
-    const builders={1:'buildBedroomChaos',2:'buildSchoolyard',3:'buildAngryTeachers',4:'buildMonsterForest',5:'buildCrazyDads',6:'buildGrandFinale'};
+    const builders={1:'buildBedroomChaos',2:'buildSchoolyard',3:'buildAngryTeachers',4:'buildMonsterForest',5:'buildCrazyDads',6:'buildGrandFinale',7:'buildAirbender'};
     const method=builders[n]||'buildBedroomChaos';
     try{this[method]();}catch(e){console.error('Level load error:',e);alert('Level '+n+' error: '+e.message);}
   }
@@ -1452,6 +1549,94 @@ class LevelManager {
     }
   }
 
+  // ============ LEVEL 7: Avatar: The Last Airbender – Oostelijke Luchttempel ============
+  buildAirbender() {
+    this.state.levelDuration=100;
+    this.scene.background=new THREE.Color(0x9fcfe8);
+    this.scene.fog=new THREE.FogExp2(0xbfe0f0,0.0025);
+
+    // Air Nomad palette
+    const stone=0xbfae94, tile=0xe0b070, ledge=0xcdbb99, sanctuary=0xd98d3a;
+
+    // === START: temple courtyard ===
+    this.addPlatform(0,0,0,14,1,12,stone);
+    this.addStreetSign(-5,0,2,'Oostelijke Luchttempel');
+    this.addAirTempleSpire(11,0,0,6);
+    this.addAirTempleSpire(-11,0,-2,5);
+
+    // === SECTION A: air scooter & rising air current ===
+    this.addPlatform(0,0,13,10,1,12,tile);
+    const sc1=new RotatingPillow(this.scene,0,1.5,12,4); this.addObstacle(sc1);
+    const air1=new BouncyBed(this.scene,0,0.5,16); this.addObstacle(air1);
+
+    // === Chasm crossing #1 – ride an air bison ===
+    this.addPlatform(0,0,25,8,1,5,ledge);
+    const bison1=new RideableSkyBison(this.scene,0,0.5,32,'x',2.0,0.7); this.addObstacle(bison1); this.platforms.push(bison1);
+    this.addPlatform(0,0,39,8,1,5,ledge);
+
+    // === CHECKPOINT 1 ===
+    this.addCheckpoint(0,1,41);
+
+    // === SECTION B: slippery cloud floor & crumbling temple tiles ===
+    this.addPlatform(0,0,48,10,1,12,tile);
+    const cloud=new SlipperyFloor(this.scene,0,0.52,50,8,6); this.addObstacle(cloud);
+    const ct1=new CollapsingPlatform(this.scene,0,0,58,5,0.5,4); this.addObstacle(ct1); this.platforms.push(ct1); this.collapsingPlatforms.push(ct1);
+    this.addPlatform(0,0,64,8,1,4,ledge);
+
+    // === Chasm crossing #2 – ride an air bison ===
+    const bison2=new RideableSkyBison(this.scene,0,0.5,71,'x',2.0,0.6); this.addObstacle(bison2); this.platforms.push(bison2);
+    this.addPlatform(0,0,78,8,1,5,ledge);
+
+    // === CHECKPOINT 2 ===
+    this.addCheckpoint(0,1,80);
+
+    // === SECTION C: climb to the sanctuary spire ===
+    this.addPlatform(0,1,85,8,1,4,tile);
+    this.addPlatform(0,2.5,90,7,1,4,tile);
+    const sc2=new RotatingPillow(this.scene,0,3.5,90,4); this.addObstacle(sc2);
+    this.addPlatform(0,4,95,7,1,4,tile);
+    this.addPlatform(0,4,102,14,1,10,sanctuary);
+    this.addStreetSign(-5,4,99,'Luchttempel Heiligdom');
+    this.addAirTempleSpire(11,4,104,7);
+    this.addAirTempleSpire(-11,4,104,7);
+
+    // === EXIT PORTAL ===
+    this.addPortal(0,6,105);
+
+    // === Appa & the flying air bison herd! ===
+    this.skyBisons.push(new SkyBison(this.scene,{baseY:26,radius:28,speed:0.22,centerZ:35,scale:1.5,phase:0}));
+    this.skyBisons.push(new SkyBison(this.scene,{baseY:17,radius:15,speed:0.42,centerZ:70,scale:0.7,phase:2.1}));
+    this.skyBisons.push(new SkyBison(this.scene,{baseY:20,radius:20,speed:-0.3,centerZ:100,scale:0.6,phase:4.2}));
+
+    // === Floating rock islands & clouds ===
+    this.addFloatingIslands();
+    this.addCloudDeco();
+  }
+
+  addAirTempleSpire(x,y,z,h) {
+    const g=new THREE.Group(); g.position.set(x,y,z);
+    const baseMat=new THREE.MeshStandardMaterial({color:0xb8a888,roughness:0.85});
+    const roofMat=new THREE.MeshStandardMaterial({color:0xc25b2a,roughness:0.7});
+    const tower=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.7,h,8),baseMat); tower.position.y=h/2; tower.castShadow=true; g.add(tower);
+    const roof=new THREE.Mesh(new THREE.ConeGeometry(2.0,2.4,8),roofMat); roof.position.y=h+1.2; roof.castShadow=true; g.add(roof);
+    const tip=new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6),new THREE.MeshStandardMaterial({color:0xf2c14e,emissive:0xe0a020,emissiveIntensity:0.4})); tip.position.y=h+2.5; g.add(tip);
+    this.scene.add(g); this.levelObjects.push(g);
+  }
+
+  addFloatingIslands() {
+    for(let i=0;i<10;i++){
+      const g=new THREE.Group();
+      const s=1.5+Math.random()*2.5;
+      const rock=new THREE.Mesh(new THREE.SphereGeometry(s,7,6),new THREE.MeshStandardMaterial({color:0x8a7a5c,roughness:0.95}));
+      rock.scale.set(1.3,0.6,1.3); g.add(rock);
+      const grass=new THREE.Mesh(new THREE.SphereGeometry(s*0.95,7,6),new THREE.MeshStandardMaterial({color:0x6ab04a,roughness:0.9}));
+      grass.scale.set(1.35,0.35,1.35); grass.position.y=s*0.25; g.add(grass);
+      const side=Math.random()>0.5?1:-1;
+      g.position.set(side*(14+Math.random()*12),4+Math.random()*16,Math.random()*110);
+      this.scene.add(g); this.levelObjects.push(g);
+    }
+  }
+
   addCloudDeco() {
     for(let i=0;i<40;i++){
       const s=new THREE.Mesh(new THREE.SphereGeometry(0.8+Math.random()*1.5,6,5),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.2+Math.random()*0.3}));
@@ -1707,6 +1892,7 @@ class LevelManager {
     for(const f of this.friends) f.update(delta, this.character.position);
     if(this._monkeys){for(const m of this._monkeys){m.userData.phase+=delta*2;m.position.y+=Math.sin(m.userData.phase)*0.002;m.rotation.y=Math.sin(m.userData.phase*0.5)*0.3;if(m.userData.pizzaGroup)m.userData.pizzaGroup.rotation.y+=delta*0.5;}}
     if(this.dragon) this.dragon.update(delta, this.character.position);
+    if(this.skyBisons)for(const b of this.skyBisons)b.update(delta, this.character.position);
     if(this.helicopter){
       this.heliPhase+=delta*0.4;
       this.helicopter.position.x=Math.sin(this.heliPhase)*20;
@@ -1777,6 +1963,7 @@ class LevelManager {
     for(const o of this.obstacles)if(o.cleanup)o.cleanup();
     for(const f of this.friends) f.cleanup();
     if(this.dragon){this.dragon.cleanup();this.dragon=null;}
+    if(this.skyBisons){for(const b of this.skyBisons)b.cleanup();this.skyBisons=[];}
     this.levelObjects=[];this.platforms=[];this.obstacles=[];this.checkpoints=[];this.portal=null;this.collapsingPlatforms=[];this._collapseStarted=false;this._monkeys=[];
     this.friends=[];this.helicopter=null;this.heliRotor=null;this.tailRotor=null;this.heliPhase=0;
   }
@@ -1806,16 +1993,16 @@ class UIManager {
     el.innerHTML=h;document.getElementById('final-score').textContent=this.state.score;
     const bonuses=[];if(this.state.falls===0)bonuses.push('No Falls Bonus: +300');if(this.state.levelTime<this.state.levelDuration*0.5)bonuses.push('Speed Bonus!');
     document.getElementById('bonus-text').textContent=bonuses.join(' | ');
-    const levelNames={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale'};
+    const levelNames={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons'};
     const lct=document.getElementById('level-complete-title');
     if(lct)lct.textContent=`Level ${this.state.currentLevel} Gehaald!`;
     const bnl=document.getElementById('btn-next-level');
-    if(bnl)bnl.textContent=this.state.currentLevel>=6?'Terug naar Menu':'Volgend Level';
+    if(bnl)bnl.textContent=this.state.currentLevel>=7?'Terug naar Menu':'Volgend Level';
     this.showScreen('level-complete');
   }
   update(delta) {
     if(!this.state.playing)return;
-    const levelNames={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale'};
+    const levelNames={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons'};
     const ln=document.getElementById('level-name');if(ln)ln.textContent=`Level ${this.state.currentLevel}: ${levelNames[this.state.currentLevel]||'???'}`;
     const tb=document.getElementById('timer-bar');const tl=document.getElementById('timer-label');
     tb.style.width=`${this.state.collapsePercent}%`;
@@ -1876,7 +2063,7 @@ class Game {
     try{
     const nextLvl=this.state.currentLevel+1;
     console.log('nextLevel called, going to level',nextLvl);
-    if(nextLvl>6){this.showMenu();return;}
+    if(nextLvl>7){this.showMenu();return;}
     const oldScore=this.state.score;
     if(this.levelManager)this.levelManager.cleanup();if(this.character)this.character.cleanup();
     this.cleanScene();
