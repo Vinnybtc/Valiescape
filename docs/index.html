@@ -116,8 +116,8 @@
     </div>
     <div id="game-over" class="ui-screen" style="display: none;">
       <div class="menu-content">
-        <h1>Dream Collapsed!</h1>
-        <p>The dream fell apart...</p>
+        <h1 id="gameover-title">Dream Collapsed!</h1>
+        <p id="gameover-msg">The dream fell apart...</p>
         <p>Score: <span id="gameover-score">0</span></p>
         <div class="menu-buttons">
           <button id="btn-retry" class="menu-btn primary">Retry</button>
@@ -142,7 +142,7 @@
 import * as THREE from 'three';
 
 // Level titles – single source of truth (HUD, level-complete, level-select)
-const LEVEL_NAMES={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons'};
+const LEVEL_NAMES={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons',8:'Noordelijke Luchttempel',9:'De Slang',10:'Het Koraalrif',11:'Ruimtestation Vali-1',12:'De Vuurberg',13:'Snoepland'};
 const LEVEL_COUNT=Object.keys(LEVEL_NAMES).length;
 
 // ============ GameState ============
@@ -965,17 +965,98 @@ class RideableSkyBison extends Obstacle {
   getBounds() { const p=this.mesh.position; return{minX:p.x-this.w/2,maxX:p.x+this.w/2,minY:p.y-0.6,maxY:p.y,minZ:p.z-this.d/2,maxZ:p.z+this.d/2}; }
 }
 
+// ============ HeadSnake ============
+// A snake that chases the player and tries to climb onto their head.
+// If it holds on long enough -> you BECOME the snake (special game over).
+class HeadSnake {
+  constructor(scene, startPos) {
+    this.scene=scene; this.caught=false; this.grabTimer=0; this.headLift=0;
+    this.speed=4.6; this.catchDist=1.3; this.escapeDist=2.2; this.grabTime=1.1;
+    const green=new THREE.MeshStandardMaterial({color:0x3a9d3a,roughness:0.6});
+    const belly=new THREE.MeshStandardMaterial({color:0xcbe88a,roughness:0.7});
+    this.segments=[];
+    const N=14;
+    for(let i=0;i<N;i++){
+      const r=(i===0?0.55:0.45-i*0.012);
+      const seg=new THREE.Mesh(new THREE.SphereGeometry(Math.max(0.15,r),10,8),green);
+      seg.castShadow=true;
+      seg.position.set(startPos.x, startPos.y+0.4, startPos.z-i*0.5);
+      scene.add(seg);
+      this.segments.push({mesh:seg, pos:seg.position.clone()});
+    }
+    // Head details on segment 0
+    const head=this.segments[0].mesh;
+    const b=new THREE.Mesh(new THREE.SphereGeometry(0.45,8,6),belly); b.scale.set(0.9,0.6,1.1); b.position.set(0,-0.15,0.15); head.add(b);
+    for(const s of [-1,1]){
+      const eye=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshStandardMaterial({color:0xffdd00,emissive:0xffaa00,emissiveIntensity:0.4}));
+      eye.position.set(s*0.22,0.2,0.4); head.add(eye);
+      const pup=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),new THREE.MeshStandardMaterial({color:0x111111}));
+      pup.position.set(s*0.22,0.2,0.5); head.add(pup);
+    }
+    // Forked tongue
+    const tongue=new THREE.Mesh(new THREE.ConeGeometry(0.06,0.5,4),new THREE.MeshStandardMaterial({color:0xff3355}));
+    tongue.rotation.x=Math.PI/2; tongue.position.set(0,0,0.6); head.add(tongue); this.tongue=tongue; this.phase=0;
+  }
+  update(delta, char) {
+    if(this.caught){ // stay coiled on the player's head
+      const h=this.segments[0].mesh;
+      h.position.lerp(new THREE.Vector3(char.position.x, char.position.y+1.7, char.position.z), 0.2);
+      for(let i=1;i<this.segments.length;i++){
+        const prev=this.segments[i-1].mesh.position; const m=this.segments[i].mesh;
+        const ang=i*0.9+this.phase; m.position.set(char.position.x+Math.cos(ang)*0.5, char.position.y+1.6-i*0.06, char.position.z+Math.sin(ang)*0.5);
+      }
+      this.phase+=delta*4; return;
+    }
+    this.phase+=delta*8;
+    const head=this.segments[0];
+    const dx=char.position.x-head.pos.x, dz=char.position.z-head.pos.z;
+    const dist=Math.hypot(dx,dz);
+    // Home toward the player
+    if(dist>0.01){
+      const step=this.speed*delta;
+      head.pos.x+=(dx/dist)*step; head.pos.z+=(dz/dist)*step;
+    }
+    // Climb logic
+    if(dist<this.catchDist){
+      this.grabTimer+=delta; this.headLift=Math.min(this.headLift+delta*2.2,1);
+      if(this.grabTimer>=this.grabTime){ this.caught=true; }
+    } else {
+      this.grabTimer=Math.max(0,this.grabTimer-delta*1.5);
+      if(dist>this.escapeDist) this.headLift=Math.max(this.headLift-delta*2,0);
+    }
+    head.pos.y=char.position.y+0.4+this.headLift*1.2;
+    head.mesh.position.copy(head.pos);
+    // Face the player
+    head.mesh.lookAt(char.position.x, head.pos.y, char.position.z);
+    // Body follows head with spacing
+    const spacing=0.55;
+    for(let i=1;i<this.segments.length;i++){
+      const prev=this.segments[i-1].pos; const cur=this.segments[i].pos;
+      const vx=prev.x-cur.x, vy=prev.y-cur.y, vz=prev.z-cur.z; const d=Math.hypot(vx,vy,vz)||1;
+      if(d>spacing){ const t=(d-spacing)/d; cur.x+=vx*t; cur.y+=vy*t; cur.z+=vz*t; }
+      // slither wiggle
+      const perp=Math.sin(this.phase-i*0.6)*0.12;
+      this.segments[i].mesh.position.set(cur.x+perp, cur.y, cur.z);
+    }
+    if(this.tongue) this.tongue.scale.z=1+Math.sin(this.phase*2)*0.5;
+  }
+  cleanup() {
+    for(const s of this.segments){ this.scene.remove(s.mesh); s.mesh.traverse(c=>{if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();}); }
+    this.segments=[];
+  }
+}
+
 // ============ LevelManager ============
 class LevelManager {
   constructor(scene,state,character,audio,particles) {
     this.scene=scene;this.state=state;this.character=character;this.audio=audio;this.particles=particles;
     this.obstacles=[];this.platforms=[];this.checkpoints=[];this.portal=null;this.levelObjects=[];this.collapsingPlatforms=[];this.alarmTickTimer=0;
     this.friends=[];this.helicopter=null;this.heliRotor=null;this.tailRotor=null;this.heliPhase=0;
-    this.dragon=null;this.skyBisons=[];
+    this.dragon=null;this.skyBisons=[];this.snake=null;
   }
   loadLevel(n) {
     this.state.currentLevel=n;
-    const builders={1:'buildBedroomChaos',2:'buildSchoolyard',3:'buildAngryTeachers',4:'buildMonsterForest',5:'buildCrazyDads',6:'buildGrandFinale',7:'buildAirbender'};
+    const builders={1:'buildBedroomChaos',2:'buildSchoolyard',3:'buildAngryTeachers',4:'buildMonsterForest',5:'buildCrazyDads',6:'buildGrandFinale',7:'buildAirbender',8:'buildAirbenderNorth',9:'buildSnakeChase',10:'buildUnderwaterReef',11:'buildSpaceStation',12:'buildVolcano',13:'buildCandyland'};
     const method=builders[n]||'buildBedroomChaos';
     try{this[method]();}catch(e){console.error('Level load error:',e);alert('Level '+n+' error: '+e.message);}
   }
@@ -1648,6 +1729,241 @@ class LevelManager {
     }
   }
 
+  // ============ LEVEL 8: Avatar: The Last Airbender – Noordelijke Luchttempel ============
+  buildAirbenderNorth() {
+    this.state.levelDuration=100;
+    this.scene.background=new THREE.Color(0xbfe3f5);
+    this.scene.fog=new THREE.FogExp2(0xdaf0fb,0.003);
+    const stone=0xa9b4bf, tile=0x8fb3d9, ledge=0xb8c6d6, sanctuary=0x6f97c4;
+    this.addPlatform(0,0,0,14,1,12,stone);
+    this.addStreetSign(-5,0,2,'Noordelijke Luchttempel');
+    this.addAirTempleSpire(11,0,0,7); this.addAirTempleSpire(-11,0,-2,6);
+    this.addPlatform(0,0,13,10,1,12,tile);
+    this.addObstacle(new RotatingPillow(this.scene,0,1.5,12,5));
+    this.addObstacle(new BouncyBed(this.scene,0,0.5,17));
+    this.addPlatform(0,0,25,8,1,5,ledge);
+    const rb1=new RideableSkyBison(this.scene,0,0.5,32,'x',2.2,0.7); this.addObstacle(rb1); this.platforms.push(rb1);
+    this.addPlatform(0,0,39,8,1,5,ledge);
+    this.addCheckpoint(0,1,41);
+    this.addPlatform(0,0,48,10,1,12,tile);
+    this.addObstacle(new SlipperyFloor(this.scene,0,0.52,50,8,7));
+    const c1=new CollapsingPlatform(this.scene,0,0,58,5,0.5,4); this.addObstacle(c1); this.platforms.push(c1); this.collapsingPlatforms.push(c1);
+    this.addPlatform(0,0,64,8,1,4,ledge);
+    const rb2=new RideableSkyBison(this.scene,0,0.5,71,'x',2.0,0.6); this.addObstacle(rb2); this.platforms.push(rb2);
+    this.addPlatform(0,0,78,8,1,5,ledge);
+    this.addCheckpoint(0,1,80);
+    this.addPlatform(0,1,85,8,1,4,tile);
+    this.addObstacle(new RotatingPillow(this.scene,0,2.5,88,5));
+    this.addPlatform(0,2.5,90,7,1,4,tile);
+    this.addPlatform(0,4,95,7,1,4,tile);
+    this.addPlatform(0,4,102,14,1,10,sanctuary);
+    this.addStreetSign(-5,4,99,'Tempel van de Noorderwind');
+    this.addAirTempleSpire(11,4,104,8); this.addAirTempleSpire(-11,4,104,8);
+    this.addPortal(0,6,105);
+    this.skyBisons.push(new SkyBison(this.scene,{baseY:27,radius:30,speed:0.2,centerZ:40,scale:1.6,phase:1}));
+    this.skyBisons.push(new SkyBison(this.scene,{baseY:18,radius:16,speed:0.4,centerZ:75,scale:0.7,phase:3}));
+    this.addFloatingIslands();
+    this.addCloudDeco();
+  }
+
+  // ============ LEVEL 9: De Slang – vlucht, of word zelf de slang ============
+  buildSnakeChase() {
+    this.state.levelDuration=110;
+    this.scene.background=new THREE.Color(0x8fd18a);
+    this.scene.fog=new THREE.FogExp2(0xa7e0a0,0.004);
+    const grass=0x6bbf59, dirt=0x9c7a4d, stone=0xb7b2a0;
+    this.addPlatform(0,0,0,14,1,12,grass);
+    this.addStreetSign(-5,0,2,'Vlucht voor de Slang!');
+    this.addPlatform(0,0,14,12,1,16,grass);
+    this.addObstacle(new BouncyBed(this.scene,4,0.5,14));
+    this.addPlatform(0,0,28,12,1,12,dirt);
+    const mp1=new MovingPlatform(this.scene,0,0,34,6,1,5,'x',3,1.2); this.addObstacle(mp1); this.platforms.push(mp1);
+    this.addCheckpoint(0,1,40);
+    this.addPlatform(0,0,46,12,1,16,grass);
+    this.addObstacle(new RotatingPillow(this.scene,0,1.5,50,6));
+    this.addPlatform(0,0,62,12,1,12,stone);
+    this.addObstacle(new SlipperyFloor(this.scene,0,0.52,64,9,6));
+    this.addCheckpoint(0,1,72);
+    this.addPlatform(0,0,80,12,1,16,grass);
+    this.addObstacle(new BouncyBed(this.scene,-4,0.5,84));
+    this.addPlatform(0,0,96,12,1,10,dirt);
+    this.addPlatform(0,0,106,14,1,8,0xd9c27a);
+    this.addStreetSign(-5,0,104,'Veilig Heiligdom');
+    this.addPortal(0,2,109);
+    this.addJungleDeco();
+    // The chasing snake spawns behind the player
+    this.snake=new HeadSnake(this.scene,{x:0,y:0.3,z:-6});
+  }
+
+  // ============ LEVEL 10: Het Koraalrif ============
+  buildUnderwaterReef() {
+    this.state.levelDuration=105;
+    this.scene.background=new THREE.Color(0x1a6f9e);
+    this.scene.fog=new THREE.FogExp2(0x1f7fb0,0.006);
+    const sand=0xe6d9a8, coralP=0xef7a9a, reef=0x2a95bf;
+    this.addPlatform(0,0,0,14,1,12,sand);
+    this.addStreetSign(-5,0,2,'Het Koraalrif');
+    this.addPlatform(0,0,14,12,1,14,reef);
+    this.addObstacle(new BouncyBed(this.scene,0,0.5,16));
+    this.addPlatform(0,0,26,8,1,5,sand);
+    const mp1=new MovingPlatform(this.scene,0,0,33,6,1,5,'x',3,1.0); this.addObstacle(mp1); this.platforms.push(mp1);
+    this.addPlatform(0,0,40,8,1,5,sand);
+    this.addCheckpoint(0,1,42);
+    this.addPlatform(0,0,49,12,1,14,reef);
+    this.addObstacle(new SlipperyFloor(this.scene,0,0.52,52,9,6));
+    this.addObstacle(new RotatingPillow(this.scene,0,1.5,58,6));
+    this.addPlatform(0,0,64,8,1,4,sand);
+    const mp2=new MovingPlatform(this.scene,0,0,71,6,1,5,'x',3.5,1.3); this.addObstacle(mp2); this.platforms.push(mp2);
+    this.addPlatform(0,0,78,8,1,5,sand);
+    this.addCheckpoint(0,1,80);
+    this.addPlatform(0,1,86,8,1,4,reef);
+    this.addPlatform(0,2.5,91,7,1,4,reef);
+    this.addPlatform(0,3,98,14,1,10,coralP);
+    this.addStreetSign(-5,3,96,'Verzonken Schat');
+    this.addPortal(0,5,101);
+    this.addReefDeco();
+  }
+
+  // ============ LEVEL 11: Ruimtestation Vali-1 ============
+  buildSpaceStation() {
+    this.state.levelDuration=100;
+    this.scene.background=new THREE.Color(0x05060f);
+    this.scene.fog=null;
+    const metal=0x8a94a6, panel=0x556070, glow=0x3fd0ff;
+    this.addPlatform(0,0,0,14,1,12,metal);
+    this.addStreetSign(-5,0,2,'Ruimtestation Vali-1');
+    this.addPlatform(0,0,14,10,1,10,panel);
+    this.addObstacle(new RotatingPillow(this.scene,0,1.5,14,6));
+    this.addPlatform(0,0,24,7,1,4,metal);
+    const mp1=new MovingPlatform(this.scene,0,0,31,5,1,4,'x',3.5,1.4); this.addObstacle(mp1); this.platforms.push(mp1);
+    this.addPlatform(0,0,38,7,1,4,metal);
+    this.addObstacle(new BouncyBed(this.scene,0,0.5,40));
+    this.addCheckpoint(0,1,42);
+    this.addPlatform(0,1.5,48,7,1,4,panel);
+    const mp2=new MovingPlatform(this.scene,0,1.5,55,5,1,4,'y',1.5,1.0); this.addObstacle(mp2); this.platforms.push(mp2);
+    this.addPlatform(0,1.5,62,7,1,4,panel);
+    const c1=new CollapsingPlatform(this.scene,0,1.5,68,5,0.5,4); this.addObstacle(c1); this.platforms.push(c1); this.collapsingPlatforms.push(c1);
+    this.addPlatform(0,1.5,74,8,1,5,metal);
+    this.addCheckpoint(0,2.5,76);
+    this.addPlatform(0,2.5,82,7,1,4,panel);
+    this.addObstacle(new RotatingPillow(this.scene,0,4,85,6));
+    this.addPlatform(0,3,92,14,1,10,glow);
+    this.addStreetSign(-5,3,90,'Dokstation');
+    this.addPortal(0,5,95);
+    this.addSpaceDeco();
+  }
+
+  // ============ LEVEL 12: De Vuurberg ============
+  buildVolcano() {
+    this.state.levelDuration=95;
+    this.scene.background=new THREE.Color(0x3a1410);
+    this.scene.fog=new THREE.FogExp2(0x5a1e10,0.006);
+    const rock=0x4a3b34, ledge=0x6b4a3a, warm=0x8a2b1a;
+    this.addLavaPool(0,-0.4,55,26,120);
+    this.addPlatform(0,0,0,14,1,12,rock);
+    this.addStreetSign(-5,0,2,'De Vuurberg');
+    this.addPlatform(0,0,13,10,1,10,rock);
+    this.addObstacle(new RotatingPillow(this.scene,0,1.5,14,5));
+    this.addPlatform(0,0,23,7,1,4,ledge);
+    const c1=new CollapsingPlatform(this.scene,0,0,29,4,0.5,4); this.addObstacle(c1); this.platforms.push(c1); this.collapsingPlatforms.push(c1);
+    const c2=new CollapsingPlatform(this.scene,0,0,35,4,0.5,4); this.addObstacle(c2); this.platforms.push(c2); this.collapsingPlatforms.push(c2);
+    this.addPlatform(0,0,41,8,1,5,ledge);
+    this.addCheckpoint(0,1,43);
+    this.addPlatform(0,0,50,8,1,5,rock);
+    const mp1=new MovingPlatform(this.scene,0,0,57,5,1,4,'x',3,1.2); this.addObstacle(mp1); this.platforms.push(mp1);
+    this.addPlatform(0,0,64,8,1,5,rock);
+    const c3=new CollapsingPlatform(this.scene,0,0,70,4,0.5,4); this.addObstacle(c3); this.platforms.push(c3); this.collapsingPlatforms.push(c3);
+    this.addPlatform(0,0,76,8,1,5,ledge);
+    this.addCheckpoint(0,1,78);
+    this.addPlatform(0,1,84,7,1,4,rock);
+    this.addObstacle(new BouncyBed(this.scene,0,1.5,86));
+    this.addPlatform(0,2.5,92,7,1,4,rock);
+    this.addPlatform(0,3,99,14,1,10,warm);
+    this.addStreetSign(-5,3,97,'Top van de Krater');
+    this.addPortal(0,5,102);
+    this.dragon=new FireDragon(this.scene);
+    this.addVolcanoDeco();
+  }
+
+  // ============ LEVEL 13: Snoepland ============
+  buildCandyland() {
+    this.state.levelDuration=100;
+    this.scene.background=new THREE.Color(0xffd9ec);
+    this.scene.fog=new THREE.FogExp2(0xffe6f2,0.003);
+    const cake=0xf7b7d0, choco=0x7b4b2a, cream=0xfff2c8, candy=0xff6fae;
+    this.addPlatform(0,0,0,14,1,12,cake);
+    this.addStreetSign(-5,0,2,'Snoepland');
+    this.addPlatform(0,0,14,12,1,14,cream);
+    this.addObstacle(new BouncyBed(this.scene,0,0.5,16));
+    this.addPlatform(0,0,26,8,1,5,choco);
+    const mp1=new MovingPlatform(this.scene,0,0,33,6,1,5,'x',3,1.1); this.addObstacle(mp1); this.platforms.push(mp1);
+    this.addPlatform(0,0,40,8,1,5,cake);
+    this.addCheckpoint(0,1,42);
+    this.addPlatform(0,0,49,12,1,12,cream);
+    this.addObstacle(new SlipperyFloor(this.scene,0,0.52,52,9,6));
+    this.addObstacle(new RotatingPillow(this.scene,0,1.5,58,6));
+    this.addPlatform(0,0,64,8,1,4,choco);
+    this.addObstacle(new BouncyBed(this.scene,0,0.5,66));
+    this.addPlatform(0,0,72,8,1,5,cake);
+    this.addCheckpoint(0,1,74);
+    this.addPlatform(0,1,80,7,1,4,candy);
+    this.addPlatform(0,2.5,85,7,1,4,candy);
+    this.addPlatform(0,3,92,14,1,10,candy);
+    this.addStreetSign(-5,3,90,'Taart-Toren');
+    this.addPortal(0,5,95);
+    this.addCandyDeco();
+  }
+
+  // ====== THEMED DECORATION HELPERS ======
+  addLavaPool(x,y,z,w,d) {
+    const m=new THREE.Mesh(new THREE.BoxGeometry(w,0.4,d),new THREE.MeshStandardMaterial({color:0xff5a1a,emissive:0xff3300,emissiveIntensity:0.8,roughness:0.4}));
+    m.position.set(x,y-0.2,z); this.scene.add(m); this.levelObjects.push(m);
+    const light=new THREE.PointLight(0xff5522,1.5,50); light.position.set(x,y+4,z); this.scene.add(light); this.levelObjects.push(light);
+  }
+  addJungleDeco() {
+    for(let i=0;i<14;i++){
+      const side=Math.random()>0.5?1:-1; const g=new THREE.Group(); g.position.set(side*(8+Math.random()*5),0,Math.random()*108);
+      const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,3+Math.random()*2,6),new THREE.MeshStandardMaterial({color:0x8a5a2b})); trunk.position.y=2; g.add(trunk);
+      const leaves=new THREE.Mesh(new THREE.SphereGeometry(1.4+Math.random(),8,6),new THREE.MeshStandardMaterial({color:0x3f9d3a,roughness:0.9})); leaves.position.y=4.2; leaves.scale.set(1.3,0.9,1.3); g.add(leaves);
+      g.traverse(c=>{if(c.isMesh)c.castShadow=true;}); this.scene.add(g); this.levelObjects.push(g);
+    }
+  }
+  addReefDeco() {
+    const colors=[0xff7aa0,0xffc14d,0x8affd1,0xb08aff,0xff5a5a];
+    for(let i=0;i<22;i++){ const side=Math.random()>0.5?1:-1; const z=Math.random()*100; const c=colors[i%colors.length];
+      if(Math.random()<0.5){ const coral=new THREE.Mesh(new THREE.ConeGeometry(0.5+Math.random()*0.5,1.5+Math.random()*1.5,6),new THREE.MeshStandardMaterial({color:c,roughness:0.7}));
+        coral.position.set(side*(7+Math.random()*6),0.6,z); this.scene.add(coral); this.levelObjects.push(coral);
+      } else { const fish=new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6),new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:0.2}));
+        fish.scale.set(1.4,0.8,0.7); fish.position.set(side*(4+Math.random()*8),2+Math.random()*6,z); this.scene.add(fish); this.levelObjects.push(fish); }
+    }
+    for(let i=0;i<12;i++){ const side=Math.random()>0.5?1:-1; const w=new THREE.Mesh(new THREE.BoxGeometry(0.2,2+Math.random()*2,0.2),new THREE.MeshStandardMaterial({color:0x2f9d5a}));
+      w.position.set(side*(6+Math.random()*6),1.2,Math.random()*100); this.scene.add(w); this.levelObjects.push(w); }
+  }
+  addSpaceDeco() {
+    for(let i=0;i<160;i++){ const s=new THREE.Mesh(new THREE.SphereGeometry(0.08+Math.random()*0.12,4,4),new THREE.MeshBasicMaterial({color:0xffffff}));
+      s.position.set((Math.random()-0.5)*120,(Math.random()-0.2)*60,Math.random()*130); this.scene.add(s); this.levelObjects.push(s); }
+    const pcol=[0xff8855,0x55aaff,0xffcc66,0xaa77ff];
+    for(let i=0;i<4;i++){ const p=new THREE.Mesh(new THREE.SphereGeometry(3+Math.random()*4,16,12),new THREE.MeshStandardMaterial({color:pcol[i],roughness:0.8,emissive:pcol[i],emissiveIntensity:0.1}));
+      p.position.set((i%2?1:-1)*(20+Math.random()*15),12+Math.random()*20,20+i*30); this.scene.add(p); this.levelObjects.push(p); }
+    for(let i=0;i<14;i++){ const a=new THREE.Mesh(new THREE.DodecahedronGeometry(0.6+Math.random()*1.2),new THREE.MeshStandardMaterial({color:0x777777,roughness:1}));
+      a.position.set((Math.random()-0.5)*40,4+Math.random()*16,Math.random()*110); this.scene.add(a); this.levelObjects.push(a); }
+  }
+  addVolcanoDeco() {
+    for(let i=0;i<60;i++){ const e=new THREE.Mesh(new THREE.SphereGeometry(0.08+Math.random()*0.12,4,4),new THREE.MeshBasicMaterial({color:0xff8822,transparent:true,opacity:0.6}));
+      e.position.set((Math.random()-0.5)*24,1+Math.random()*14,Math.random()*110); this.scene.add(e); this.levelObjects.push(e); }
+    for(let i=0;i<10;i++){ const side=Math.random()>0.5?1:-1; const r=new THREE.Mesh(new THREE.ConeGeometry(1+Math.random(),3+Math.random()*4,5),new THREE.MeshStandardMaterial({color:0x33241f,roughness:1}));
+      r.position.set(side*(9+Math.random()*5),1.5,Math.random()*108); this.scene.add(r); this.levelObjects.push(r); }
+  }
+  addCandyDeco() {
+    const colors=[0xff6fae,0xffe14d,0x6fd0ff,0x9bff6f,0xb06fff];
+    for(let i=0;i<16;i++){ const side=Math.random()>0.5?1:-1; const c=colors[i%colors.length]; const g=new THREE.Group(); g.position.set(side*(8+Math.random()*5),0,Math.random()*98);
+      const stick=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,2.5,6),new THREE.MeshStandardMaterial({color:0xffffff})); stick.position.y=1.25; g.add(stick);
+      const pop=new THREE.Mesh(new THREE.TorusGeometry(0.7,0.25,8,16),new THREE.MeshStandardMaterial({color:c,roughness:0.4,emissive:c,emissiveIntensity:0.15})); pop.position.y=2.6; g.add(pop);
+      g.traverse(m=>{if(m.isMesh)m.castShadow=true;}); this.scene.add(g); this.levelObjects.push(g); }
+    for(let i=0;i<14;i++){ const c=colors[i%colors.length]; const gd=new THREE.Mesh(new THREE.SphereGeometry(0.6+Math.random()*0.4,10,8),new THREE.MeshStandardMaterial({color:c,roughness:0.5}));
+      gd.scale.set(1,1.2,1); const side=Math.random()>0.5?1:-1; gd.position.set(side*(6+Math.random()*6),0.6,Math.random()*98); this.scene.add(gd); this.levelObjects.push(gd); }
+  }
+
   addCloudDeco() {
     for(let i=0;i<40;i++){
       const s=new THREE.Mesh(new THREE.SphereGeometry(0.8+Math.random()*1.5,6,5),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.2+Math.random()*0.3}));
@@ -1904,6 +2220,7 @@ class LevelManager {
     if(this._monkeys){for(const m of this._monkeys){m.userData.phase+=delta*2;m.position.y+=Math.sin(m.userData.phase)*0.002;m.rotation.y=Math.sin(m.userData.phase*0.5)*0.3;if(m.userData.pizzaGroup)m.userData.pizzaGroup.rotation.y+=delta*0.5;}}
     if(this.dragon) this.dragon.update(delta, this.character.position);
     if(this.skyBisons)for(const b of this.skyBisons)b.update(delta, this.character.position);
+    if(this.snake){ this.snake.update(delta, this.character); if(this.snake.caught && !this.state.gameOver) this.onSnakeCatch(); }
     if(this.helicopter){
       this.heliPhase+=delta*0.4;
       this.helicopter.position.x=Math.sin(this.heliPhase)*20;
@@ -1926,7 +2243,15 @@ class LevelManager {
     if(!this._collapseStarted){this._collapseStarted=true;this._collapseZ=this.character.position.z-15;this.audio.playCollapse();}
     this._collapseZ+=0.1;
     for(const p of this.platforms){if(p.mesh&&p.bounds&&p.bounds.maxZ<this._collapseZ){if(p.mesh.visible){p.mesh.visible=false;p.disabled=true;}}}
-    if(this.character.position.z<this._collapseZ){this.state.gameOver=true;this.state.playing=false;window.game.ui.showScreen('game-over');}
+    if(this.character.position.z<this._collapseZ){this.state.gameOver=true;this.state.playing=false;this.setGameOverText('Dream Collapsed!','The dream fell apart...');window.game.ui.showScreen('game-over');}
+  }
+  setGameOverText(title,msg){ const t=document.getElementById('gameover-title'); if(t)t.textContent=title; const m=document.getElementById('gameover-msg'); if(m)m.textContent=msg; }
+  onSnakeCatch() {
+    this.state.gameOver=true; this.state.playing=false;
+    if(this.character&&this.character.mesh) this.character.mesh.visible=false;
+    this.audio.playFall();
+    this.setGameOverText('Je bent nu de SLANG! 🐍','De slang kroop op je hoofd... nu ben JIJ de slang.');
+    window.game.ui.showScreen('game-over');
   }
   checkPlatformCollisions() {
     const char=this.character;const pos=char.position;const r=char.colliderRadius;let on=false;
@@ -1975,6 +2300,7 @@ class LevelManager {
     for(const f of this.friends) f.cleanup();
     if(this.dragon){this.dragon.cleanup();this.dragon=null;}
     if(this.skyBisons){for(const b of this.skyBisons)b.cleanup();this.skyBisons=[];}
+    if(this.snake){this.snake.cleanup();this.snake=null;}
     this.levelObjects=[];this.platforms=[];this.obstacles=[];this.checkpoints=[];this.portal=null;this.collapsingPlatforms=[];this._collapseStarted=false;this._monkeys=[];
     this.friends=[];this.helicopter=null;this.heliRotor=null;this.tailRotor=null;this.heliPhase=0;
   }
