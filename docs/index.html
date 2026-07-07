@@ -73,6 +73,13 @@
         </div>
       </div>
     </div>
+    <div id="level-select" class="ui-screen" style="display: none; background: linear-gradient(135deg, #667eea55, #764ba255); align-items: center; justify-content: center; pointer-events: auto; overflow-y: auto;">
+      <div class="menu-content" style="padding: 2rem 1rem;">
+        <h1 class="game-title" style="font-size: 2.6rem; margin-bottom: 1.2rem;">Kies je Level</h1>
+        <div id="level-select-buttons" style="display: flex; flex-wrap: wrap; gap: 0.7rem; justify-content: center; max-width: 620px; margin: 0 auto;"></div>
+        <button id="btn-levelselect-back" class="menu-btn" style="margin-top: 1.4rem;">Terug</button>
+      </div>
+    </div>
     <div id="hud" class="ui-screen" style="display: none;">
       <div id="hud-top">
         <div id="timer-bar-container"><div id="timer-bar"></div><span id="timer-label">Dream Stable</span></div>
@@ -133,6 +140,10 @@
 </script>
 <script type="module">
 import * as THREE from 'three';
+
+// Level titles – single source of truth (HUD, level-complete, level-select)
+const LEVEL_NAMES={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons'};
+const LEVEL_COUNT=Object.keys(LEVEL_NAMES).length;
 
 // ============ GameState ============
 class GameState {
@@ -1973,12 +1984,13 @@ class LevelManager {
 class UIManager {
   constructor(state,game) {
     this.state=state;this.game=game;
-    this.screens={'main-menu':document.getElementById('main-menu'),'hud':document.getElementById('hud'),'level-complete':document.getElementById('level-complete'),'game-over':document.getElementById('game-over')};
+    this.screens={'main-menu':document.getElementById('main-menu'),'level-select':document.getElementById('level-select'),'hud':document.getElementById('hud'),'level-complete':document.getElementById('level-complete'),'game-over':document.getElementById('game-over')};
     this.setupButtons();
   }
   setupButtons() {
     document.getElementById('btn-play').addEventListener('click',()=>{this.game.audio.init();this.game.startGame();});
-    document.getElementById('btn-level-select').addEventListener('click',()=>{this.game.audio.init();this.game.startGame();});
+    document.getElementById('btn-level-select').addEventListener('click',()=>{this.buildLevelSelect();this.showScreen('level-select');});
+    document.getElementById('btn-levelselect-back').addEventListener('click',()=>{this.showScreen('main-menu');});
     document.getElementById('btn-settings').addEventListener('click',()=>{alert('Settings coming soon!');});
     document.getElementById('btn-next-level').addEventListener('click',()=>{this.game.nextLevel();});
     document.getElementById('btn-replay').addEventListener('click',()=>{this.game.restartLevel();});
@@ -1987,22 +1999,34 @@ class UIManager {
     document.getElementById('btn-gameover-menu').addEventListener('click',()=>{this.game.showMenu();});
   }
   showScreen(id) { for(const[name,el]of Object.entries(this.screens))el.style.display=name===id?'':'none'; }
+  buildLevelSelect() {
+    const c=document.getElementById('level-select-buttons'); if(!c)return;
+    c.innerHTML='';
+    for(const n of Object.keys(LEVEL_NAMES)){
+      const b=document.createElement('button');
+      b.className='menu-btn'+(n==='1'?' primary':'');
+      b.style.minWidth='260px';
+      b.textContent=`Level ${n}: ${LEVEL_NAMES[n]}`;
+      b.addEventListener('click',()=>{this.game.audio.init();this.game.startGame(Number(n));});
+      c.appendChild(b);
+    }
+  }
   showLevelComplete() {
     const stars=this.state.getStarRating();const el=document.getElementById('stars-display');
     let h='';for(let i=0;i<3;i++){if(i<stars)h+='<span style="color:#FFD700;text-shadow:0 0 10px #FFD700;">&#9733;</span>';else h+='<span style="color:#555;">&#9733;</span>';}
     el.innerHTML=h;document.getElementById('final-score').textContent=this.state.score;
     const bonuses=[];if(this.state.falls===0)bonuses.push('No Falls Bonus: +300');if(this.state.levelTime<this.state.levelDuration*0.5)bonuses.push('Speed Bonus!');
     document.getElementById('bonus-text').textContent=bonuses.join(' | ');
-    const levelNames={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons'};
+    const levelNames=LEVEL_NAMES;
     const lct=document.getElementById('level-complete-title');
     if(lct)lct.textContent=`Level ${this.state.currentLevel} Gehaald!`;
     const bnl=document.getElementById('btn-next-level');
-    if(bnl)bnl.textContent=this.state.currentLevel>=7?'Terug naar Menu':'Volgend Level';
+    if(bnl)bnl.textContent=this.state.currentLevel>=LEVEL_COUNT?'Terug naar Menu':'Volgend Level';
     this.showScreen('level-complete');
   }
   update(delta) {
     if(!this.state.playing)return;
-    const levelNames={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons'};
+    const levelNames=LEVEL_NAMES;
     const ln=document.getElementById('level-name');if(ln)ln.textContent=`Level ${this.state.currentLevel}: ${levelNames[this.state.currentLevel]||'???'}`;
     const tb=document.getElementById('timer-bar');const tl=document.getElementById('timer-label');
     tb.style.width=`${this.state.collapsePercent}%`;
@@ -2041,14 +2065,16 @@ class Game {
   setupEventListeners() {
     window.addEventListener('resize',()=>{this.renderer.setSize(window.innerWidth,window.innerHeight);if(this.camera){this.camera.camera.aspect=window.innerWidth/window.innerHeight;this.camera.camera.updateProjectionMatrix();}});
   }
-  startGame() {
+  startGame(level=1) {
     try {
+      if(this.levelManager)this.levelManager.cleanup();if(this.character)this.character.cleanup();
+      this.cleanScene();
       this.state.reset();this.scene.fog=new THREE.FogExp2(0xccccff,0.008);this.scene.background=new THREE.Color(0x88aaff);
       this.character=new CharacterController(this.scene,this.state,this.input,this.audio,this.particles);
       this.camera=new CameraController(this.character);
       this.levelManager=new LevelManager(this.scene,this.state,this.character,this.audio,this.particles);
       this.levelManager.camera=this.camera;
-      this.levelManager.loadLevel(1);this.ui.showScreen('hud');this.state.playing=true;
+      this.levelManager.loadLevel(level);this.ui.showScreen('hud');this.state.playing=true;
     } catch(e) {
       console.error('startGame error:', e);
       alert('Game error: ' + e.message);
@@ -2063,7 +2089,7 @@ class Game {
     try{
     const nextLvl=this.state.currentLevel+1;
     console.log('nextLevel called, going to level',nextLvl);
-    if(nextLvl>7){this.showMenu();return;}
+    if(nextLvl>LEVEL_COUNT){this.showMenu();return;}
     const oldScore=this.state.score;
     if(this.levelManager)this.levelManager.cleanup();if(this.character)this.character.cleanup();
     this.cleanScene();
