@@ -80,6 +80,13 @@
         <button id="btn-levelselect-back" class="menu-btn" style="margin-top: 1.4rem;">Terug</button>
       </div>
     </div>
+    <div id="settings" class="ui-screen" style="display: none; background: linear-gradient(135deg, #667eea55, #764ba255); align-items: center; justify-content: center; pointer-events: auto; overflow-y: auto;">
+      <div class="menu-content" style="padding: 2rem 1rem;">
+        <h1 class="game-title" style="font-size: 2.6rem; margin-bottom: 1.4rem;">Instellingen</h1>
+        <div id="settings-list" style="display: flex; flex-direction: column; gap: 0.8rem; max-width: 440px; margin: 0 auto;"></div>
+        <button id="btn-settings-back" class="menu-btn" style="margin-top: 1.4rem;">Terug</button>
+      </div>
+    </div>
     <div id="hud" class="ui-screen" style="display: none;">
       <div id="hud-top">
         <div id="timer-bar-container"><div id="timer-bar"></div><span id="timer-label">Dream Stable</span></div>
@@ -171,6 +178,12 @@ const EXTRA_LEVELS={
 for(const k in EXTRA_LEVELS) LEVEL_NAMES[k]=EXTRA_LEVELS[k].name;
 const LEVEL_COUNT=Object.keys(LEVEL_NAMES).length;
 
+// ============ Settings (persisted in localStorage) ============
+function loadSettings(){ const s={sfx:true,shake:true,difficulty:'normal'}; try{const raw=localStorage.getItem('valis-settings'); if(raw)Object.assign(s,JSON.parse(raw));}catch(e){} return s; }
+const SETTINGS=loadSettings();
+function saveSettings(){ try{localStorage.setItem('valis-settings',JSON.stringify(SETTINGS));}catch(e){} }
+function difficultyMult(){ return SETTINGS.difficulty==='easy'?1.5:(SETTINGS.difficulty==='hard'?0.7:1.0); }
+
 // ============ GameState ============
 class GameState {
   constructor() { this.reset(); }
@@ -260,6 +273,7 @@ class AudioManager {
     try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); this.initialized = true; } catch(e) {}
   }
   playTone(freq, dur, type='sine', vol=0.15) {
+    if (!SETTINGS.sfx) return;
     this.init();
     if (!this.audioCtx) return;
     const osc = this.audioCtx.createOscillator();
@@ -482,7 +496,7 @@ class CameraController {
     this.camera.position.copy(this.currentPosition); this.camera.position.x+=sx; this.camera.position.y+=sy;
     this.camera.lookAt(this.currentLookAt);
   }
-  shake(i=0.3,d=0.3) { this.shakeIntensity=i; this.shakeDuration=d; this.shakeTimer=d; }
+  shake(i=0.3,d=0.3) { if(!SETTINGS.shake){this.shakeTimer=0;return;} this.shakeIntensity=i; this.shakeDuration=d; this.shakeTimer=d; }
 }
 
 // ============ Obstacles ============
@@ -2345,7 +2359,7 @@ class LevelManager {
     }
   }
   updateTimer(delta) {
-    this.state.levelTime+=delta;this.state.collapsePercent=Math.min((this.state.levelTime/this.state.levelDuration)*100,100);
+    this.state.levelTime+=delta;this.state.collapsePercent=Math.min((this.state.levelTime/(this.state.levelDuration*difficultyMult()))*100,100);
     if(this.state.collapsePercent>=80&&this.state.collapsePercent<100){
       this.scene.background=new THREE.Color().lerpColors(new THREE.Color(0x88aaff),new THREE.Color(0x6633aa),(this.state.collapsePercent-80)/20);
       this.alarmTickTimer-=delta;if(this.alarmTickTimer<=0){this.audio.playAlarmTick();this.alarmTickTimer=1.0;}
@@ -2423,14 +2437,15 @@ class LevelManager {
 class UIManager {
   constructor(state,game) {
     this.state=state;this.game=game;
-    this.screens={'main-menu':document.getElementById('main-menu'),'level-select':document.getElementById('level-select'),'hud':document.getElementById('hud'),'level-complete':document.getElementById('level-complete'),'game-over':document.getElementById('game-over')};
+    this.screens={'main-menu':document.getElementById('main-menu'),'level-select':document.getElementById('level-select'),'settings':document.getElementById('settings'),'hud':document.getElementById('hud'),'level-complete':document.getElementById('level-complete'),'game-over':document.getElementById('game-over')};
     this.setupButtons();
   }
   setupButtons() {
     document.getElementById('btn-play').addEventListener('click',()=>{this.game.audio.init();this.game.startGame();});
     document.getElementById('btn-level-select').addEventListener('click',()=>{this.buildLevelSelect();this.showScreen('level-select');});
     document.getElementById('btn-levelselect-back').addEventListener('click',()=>{this.showScreen('main-menu');});
-    document.getElementById('btn-settings').addEventListener('click',()=>{alert('Settings coming soon!');});
+    document.getElementById('btn-settings').addEventListener('click',()=>{this.buildSettings();this.showScreen('settings');});
+    document.getElementById('btn-settings-back').addEventListener('click',()=>{this.showScreen('main-menu');});
     document.getElementById('btn-next-level').addEventListener('click',()=>{this.game.nextLevel();});
     document.getElementById('btn-replay').addEventListener('click',()=>{this.game.restartLevel();});
     document.getElementById('btn-menu').addEventListener('click',()=>{this.game.showMenu();});
@@ -2449,6 +2464,16 @@ class UIManager {
       b.addEventListener('click',()=>{this.game.audio.init();this.game.startGame(Number(n));});
       c.appendChild(b);
     }
+  }
+  buildSettings() {
+    const list=document.getElementById('settings-list'); if(!list)return; list.innerHTML='';
+    const mkRow=(label,control)=>{ const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:1rem;background:rgba(255,255,255,0.12);padding:0.7rem 1.1rem;border-radius:14px;'; const l=document.createElement('span'); l.textContent=label; l.style.cssText='color:#fff;font-weight:600;font-size:1.05rem;'; row.appendChild(l); row.appendChild(control); list.appendChild(row); };
+    const mkToggle=(getv,setv)=>{ const b=document.createElement('button'); b.className='menu-btn'; b.style.cssText='min-width:90px;padding:0.4rem 1rem;font-size:0.95rem;'; const render=()=>{ const on=getv(); b.textContent=on?'Aan':'Uit'; b.style.background=on?'linear-gradient(135deg,#4caf50,#2e7d32)':'rgba(255,255,255,0.15)'; b.style.borderColor=on?'transparent':'rgba(255,255,255,0.3)'; }; b.addEventListener('click',()=>{ setv(!getv()); render(); }); render(); return b; };
+    const mkSeg=(opts,getv,setv)=>{ const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:0.35rem;'; const btns=[]; const render=()=>{ const v=getv(); opts.forEach((o,i)=>{ const on=o.value===v; btns[i].style.background=on?'linear-gradient(135deg,#667eea,#764ba2)':'rgba(255,255,255,0.15)'; btns[i].style.borderColor=on?'transparent':'rgba(255,255,255,0.3)'; }); }; opts.forEach(o=>{ const b=document.createElement('button'); b.className='menu-btn'; b.style.cssText='min-width:auto;padding:0.4rem 0.85rem;font-size:0.85rem;'; b.textContent=o.label; b.addEventListener('click',()=>{ setv(o.value); render(); }); wrap.appendChild(b); btns.push(b); }); render(); return wrap; };
+    mkRow('Geluidseffecten', mkToggle(()=>SETTINGS.sfx, v=>{SETTINGS.sfx=v;saveSettings(); if(v)this.game.audio.playCheckpoint();}));
+    mkRow('Muziek', mkToggle(()=>window.__getMusic&&window.__getMusic(), v=>{ if(window.__setMusic)window.__setMusic(v); }));
+    mkRow('Camera schudden', mkToggle(()=>SETTINGS.shake, v=>{SETTINGS.shake=v;saveSettings(); if(v&&this.game.camera)this.game.camera.shake(0.3,0.3);}));
+    mkRow('Moeilijkheid', mkSeg([{label:'Makkelijk',value:'easy'},{label:'Normaal',value:'normal'},{label:'Moeilijk',value:'hard'}], ()=>SETTINGS.difficulty, v=>{SETTINGS.difficulty=v;saveSettings();}));
   }
   showLevelComplete() {
     const stars=this.state.getStarRating();const el=document.getElementById('stars-display');
@@ -2578,17 +2603,20 @@ try {
 }
 </script>
 <script>
-// Music toggle for Nostalgie - JOB
+// Music toggle for Nostalgie - JOB (state shared with the Settings screen)
 (function(){
   var btn=document.getElementById('music-btn');
   var player=document.getElementById('spotify-player');
-  var open=false;
-  btn.addEventListener('click',function(){
-    open=!open;
-    player.style.display=open?'block':'none';
-    btn.classList.toggle('playing',open);
-    btn.innerHTML=open?'&#9835;&#9834;':'&#9835;';
-  });
+  function getMusic(){ try{return localStorage.getItem('valis-music')==='1';}catch(e){return false;} }
+  function setMusic(on){
+    player.style.display=on?'block':'none';
+    btn.classList.toggle('playing',on);
+    btn.innerHTML=on?'&#9835;&#9834;':'&#9835;';
+    try{localStorage.setItem('valis-music',on?'1':'0');}catch(e){}
+  }
+  window.__getMusic=getMusic; window.__setMusic=setMusic;
+  btn.addEventListener('click',function(){ setMusic(!getMusic()); });
+  setMusic(getMusic());
 })();
 // Fallback: if module fails to load, show error and make Play retry
 window.addEventListener('DOMContentLoaded', function() {
