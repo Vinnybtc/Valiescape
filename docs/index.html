@@ -432,8 +432,9 @@ class CharacterController {
     if (this.state.danceBoostActive) forwardSpeed *= 1.2;
     this.velocity.z = forwardSpeed;
     let strafeVel = 0;
-    if (this.input.keys.left) strafeVel = -this.strafeSpeed * airMult;
-    if (this.input.keys.right) strafeVel = this.strafeSpeed * airMult;
+    // Camera looks along +z, so world +x is screen-left: left => +x, right => -x
+    if (this.input.keys.left) strafeVel = this.strafeSpeed * airMult;
+    if (this.input.keys.right) strafeVel = -this.strafeSpeed * airMult;
     this.velocity.x = strafeVel;
     if (this.grounded) this.coyoteTimer = this.coyoteTime; else this.coyoteTimer -= delta;
     if (this.input.consumeJump() && this.coyoteTimer > 0) {
