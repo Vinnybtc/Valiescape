@@ -143,6 +143,32 @@ import * as THREE from 'three';
 
 // Level titles – single source of truth (HUD, level-complete, level-select)
 const LEVEL_NAMES={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons',8:'Noordelijke Luchttempel',9:'De Slang',10:'Het Koraalrif',11:'Ruimtestation Vali-1',12:'De Vuurberg',13:'Snoepland'};
+
+// Levels 14-33: data-driven themed levels built by LevelManager.buildGeneric(cfg).
+// pal = platform colours; deco = scattered props; creature/lava/clouds/stars = extras.
+const EXTRA_LEVELS={
+  14:{name:'Betoverd Bos',bg:0x8fd0a0,fog:[0xa8e0b8,0.004],pal:{ground:0x5a8f3a,accent:0x6ea84a,ledge:0x9c7a4d,goal:0xcfe0a0},obstacles:['cushion','pillow','bouncy'],deco:{shape:'tree',colors:[0x2f8f3a,0x3faa4a,0x4fbf5a],count:18,scale:1.2},goalSign:'Elfenpoort'},
+  15:{name:'IJspaleis',bg:0xcfefff,fog:[0xe6f7ff,0.003],pal:{ground:0xbfe3f0,accent:0xa9d4e6,ledge:0xd8eef7,goal:0x8fc4de},obstacles:['slippery','slippery','pillow'],deco:{shape:'crystal',colors:[0x9fd8ff,0xcfeeff,0xbfe8ff],count:20,glow:true,scale:1.1},goalSign:'IJstroon'},
+  16:{name:'Woestijn & Piramides',bg:0xf2d9a0,fog:[0xf0e0b0,0.0025],pal:{ground:0xe6c878,accent:0xd8b45a,ledge:0xcaa74e,goal:0xffe08a},obstacles:['bouncy','pillow','slippery'],deco:{shape:'cone',colors:[0xdcc27a,0xcbb060,0xc0a050],count:14,scale:2.2},goalSign:'Farao Tempel'},
+  17:{name:'Wolkenkoninkrijk',bg:0xbfe0ff,fog:[0xdff0ff,0.0025],pal:{ground:0xeef6ff,accent:0xd8ebff,ledge:0xcfe6ff,goal:0xaad0ff},obstacles:['bouncy','pillow','bouncy'],deco:{shape:'sphere',colors:[0xffffff,0xeef6ff],count:24,scale:1.6,float:true,rough:1},creature:'bison',clouds:true,goalSign:'Hemelpaleis'},
+  18:{name:'Spookkasteel',bg:0x2a2140,fog:[0x2a2140,0.006],pal:{ground:0x3a3350,accent:0x4a3f66,ledge:0x5a4a70,goal:0x7a3f88},obstacles:['cushion','pillow','bouncy'],deco:{shape:'crystal',colors:[0x9b7ad6,0x7a5ab0,0xbf9ae0],count:16,glow:true},creature:'helicopter',goalSign:'Torenkamer'},
+  19:{name:'Neon Disco Stad',bg:0x0a0a1a,fog:null,pal:{ground:0x222244,accent:0x33125a,ledge:0x2a2a55,goal:0xff2fbf},obstacles:['pillow','bouncy','slippery'],deco:{shape:'crystal',colors:[0xff2fbf,0x2ffbff,0xffe12f,0x8a2fff],count:26,glow:true,float:true,stars:80},creature:'helicopter',goalSign:'Dansvloer'},
+  20:{name:'Piratenbaai',bg:0x4a90c0,fog:[0x6aa8d0,0.003],pal:{ground:0xd8c090,accent:0xb98d5a,ledge:0x9c6f3a,goal:0xe0c070},obstacles:['bouncy','slippery','pillow'],deco:{shape:'box',colors:[0x8a5a2b,0x6a3f1a,0x9a6a3a],count:14,scale:1.3},goalSign:'Schatkist'},
+  21:{name:'Dinosaurus Vallei',bg:0x9fd08a,fog:[0xbfe0a0,0.004],pal:{ground:0x6a9a3a,accent:0x7fae4a,ledge:0x9c7a4d,goal:0xd0e08a},obstacles:['bouncy','pillow','cushion'],deco:{shape:'tree',colors:[0x2f8f3a,0x4faa4a],count:16,scale:1.6},creature:'dragon',goalSign:'Oervallei'},
+  22:{name:'Regenboog Weg',bg:0x101030,fog:null,pal:{ground:0xff4444,accent:0x44aaff,ledge:0xffdd44,goal:0x8844ff},obstacles:['bouncy','pillow','slippery'],deco:{shape:'crystal',colors:[0xff4444,0xffaa44,0xffee44,0x44dd44,0x4488ff,0x8844ff],count:30,glow:true,float:true,stars:120},goalSign:'Regenboog Einde'},
+  23:{name:'Jungle Tempel',bg:0x7fbf6a,fog:[0x9fd08a,0.005],pal:{ground:0x5a8f3a,accent:0x8a7a4a,ledge:0xb7b2a0,goal:0xc9b06a},obstacles:['slippery','pillow','bouncy'],deco:{shape:'tree',colors:[0x2f8f3a,0x3f9a4a],count:18,scale:1.4},creature:'snake',goalSign:'Verloren Tempel'},
+  24:{name:'Sneeuwbergen',bg:0xdfeeff,fog:[0xeef7ff,0.003],pal:{ground:0xeef4fa,accent:0xd8e6f0,ledge:0xffffff,goal:0xbfd8ea},obstacles:['slippery','slippery','bouncy'],deco:{shape:'cone',colors:[0x3a6a4a,0x4a7a5a,0x2f5f3f],count:16,scale:2.0},goalSign:'Bergtop'},
+  25:{name:'Onderwater Grot',bg:0x08303a,fog:[0x0a3a48,0.008],pal:{ground:0x1a5a5a,accent:0x217a6a,ledge:0x2a8a7a,goal:0x2fd0b0},obstacles:['slippery','pillow','cushion'],deco:{shape:'crystal',colors:[0x2fd0ff,0x2fffd0,0x7affd0],count:24,glow:true,float:true},goalSign:'Verborgen Grot'},
+  26:{name:'Vulkanisch Eiland',bg:0x5a2a1a,fog:[0x6a3020,0.004],pal:{ground:0x4a6a3a,accent:0x5a3b34,ledge:0x6b4a3a,goal:0x8a2b1a},obstacles:['pillow','bouncy','slippery'],deco:{shape:'cone',colors:[0x3a241f,0x552a1a],count:12,scale:2.4},creature:'dragon',lava:true,goalSign:'Kraterrand'},
+  27:{name:'Sterrenbrug',bg:0x05060f,fog:null,pal:{ground:0x8a94a6,accent:0x556070,ledge:0x9fa8b8,goal:0x3fd0ff},obstacles:['pillow','bouncy','slippery'],deco:{shape:'sphere',colors:[0xff8855,0x55aaff,0xffcc66,0xaa77ff],count:6,scale:3,float:true,glow:true,stars:160},goalSign:'Melkweg Dok'},
+  28:{name:'Snoepfabriek',bg:0xffe0ef,fog:[0xffe8f4,0.003],pal:{ground:0xf7b7d0,accent:0xffd36a,ledge:0x7b4b2a,goal:0xff6fae},obstacles:['bouncy','slippery','bouncy'],deco:{shape:'sphere',colors:[0xff6fae,0xffe14d,0x6fd0ff,0x9bff6f],count:20,scale:1.1},goalSign:'Chocolade Rivier'},
+  29:{name:'Robotfabriek',bg:0x1a2028,fog:[0x232a33,0.004],pal:{ground:0x8a94a6,accent:0x5a6470,ledge:0x9fa8b4,goal:0x3fd0ff},obstacles:['pillow','bouncy','slippery'],deco:{shape:'box',colors:[0x99a3b0,0x6a7480,0xffcc33],count:18,scale:1.2},creature:'helicopter',goalSign:'Assemblagelijn'},
+  30:{name:'Oase bij Nacht',bg:0x14204a,fog:[0x1a2a5a,0.003],pal:{ground:0xe6c878,accent:0xd8b45a,ledge:0xcaa74e,goal:0x2fd0ff},obstacles:['bouncy','pillow','slippery'],deco:{shape:'tree',colors:[0x2f8f3a,0x3f9a4a],count:12,scale:1.6,stars:120},goalSign:'Oase'},
+  31:{name:'Kristalgrotten',bg:0x140a24,fog:[0x1a1030,0.006],pal:{ground:0x3a2a55,accent:0x4a3a66,ledge:0x5a4a70,goal:0x2fffd0},obstacles:['slippery','pillow','bouncy'],deco:{shape:'crystal',colors:[0x9b7ad6,0x2fffd0,0xff7ad6,0x7ad0ff],count:28,glow:true,float:true,scale:1.3},goalSign:'Kristalhart'},
+  32:{name:'Hemelse Trap',bg:0xcfe6ff,fog:[0xe6f2ff,0.002],pal:{ground:0xffffff,accent:0xeef4ff,ledge:0xdfeaff,goal:0xffe98a},obstacles:['bouncy','pillow','bouncy'],deco:{shape:'sphere',colors:[0xffffff,0xffe98a],count:22,scale:1.5,float:true,rough:1},creature:'bison',clouds:true,goalSign:'Hemelpoort'},
+  33:{name:"Vali's Grote Droomfinale",bg:0x2a2a5a,fog:[0x3a3a6a,0.002],pal:{ground:0xff5566,accent:0x44aaff,ledge:0xffdd55,goal:0xffd700},obstacles:['bouncy','pillow','slippery'],deco:{shape:'crystal',colors:[0xff5566,0xffaa44,0xffee55,0x44dd66,0x4499ff,0x9955ff],count:30,glow:true,float:true,stars:100},creature:'finale',clouds:true,goalSign:"Vali's Droom"}
+};
+for(const k in EXTRA_LEVELS) LEVEL_NAMES[k]=EXTRA_LEVELS[k].name;
 const LEVEL_COUNT=Object.keys(LEVEL_NAMES).length;
 
 // ============ GameState ============
@@ -1057,8 +1083,11 @@ class LevelManager {
   loadLevel(n) {
     this.state.currentLevel=n;
     const builders={1:'buildBedroomChaos',2:'buildSchoolyard',3:'buildAngryTeachers',4:'buildMonsterForest',5:'buildCrazyDads',6:'buildGrandFinale',7:'buildAirbender',8:'buildAirbenderNorth',9:'buildSnakeChase',10:'buildUnderwaterReef',11:'buildSpaceStation',12:'buildVolcano',13:'buildCandyland'};
-    const method=builders[n]||'buildBedroomChaos';
-    try{this[method]();}catch(e){console.error('Level load error:',e);alert('Level '+n+' error: '+e.message);}
+    try{
+      if(builders[n]) this[builders[n]]();
+      else if(EXTRA_LEVELS[n]) this.buildGeneric(EXTRA_LEVELS[n]);
+      else this.buildBedroomChaos();
+    }catch(e){console.error('Level load error:',e);alert('Level '+n+' error: '+e.message);}
   }
   buildBedroomChaos() {
     this.scene.background = new THREE.Color(0x88aaff);
@@ -1962,6 +1991,90 @@ class LevelManager {
       g.traverse(m=>{if(m.isMesh)m.castShadow=true;}); this.scene.add(g); this.levelObjects.push(g); }
     for(let i=0;i<14;i++){ const c=colors[i%colors.length]; const gd=new THREE.Mesh(new THREE.SphereGeometry(0.6+Math.random()*0.4,10,8),new THREE.MeshStandardMaterial({color:c,roughness:0.5}));
       gd.scale.set(1,1.2,1); const side=Math.random()>0.5?1:-1; gd.position.set(side*(6+Math.random()*6),0.6,Math.random()*98); this.scene.add(gd); this.levelObjects.push(gd); }
+  }
+
+  // ============ GENERIC DATA-DRIVEN LEVEL BUILDER (levels 14-33) ============
+  buildGeneric(cfg) {
+    const pal=cfg.pal||{ground:0xcccccc,accent:0xbbbbbb,ledge:0xdddddd,goal:0xffd700};
+    this.state.levelDuration=cfg.duration||95;
+    this.scene.background=new THREE.Color(cfg.bg!==undefined?cfg.bg:0x88aaff);
+    this.scene.fog=cfg.fog?new THREE.FogExp2(cfg.fog[0],cfg.fog[1]):null;
+    const G=pal.ground,A=pal.accent,L=pal.ledge,GOAL=pal.goal;
+    if(cfg.lava) this.addLavaPool(0,-0.4,52,26,120);
+    // START
+    this.addPlatform(0,0,0,14,1,12,G);
+    this.addStreetSign(-5,0,2,cfg.name);
+    // SECTION A
+    this.addPlatform(0,0,14,12,1,16,A);
+    this._genObstacle(cfg,0,12,0);
+    this._genObstacle(cfg,4,18,1);
+    this.addPlatform(0,0,27,8,1,5,L);
+    const mpA=new MovingPlatform(this.scene,0,0,33,6,1,5,'x',3,1.1); this.addObstacle(mpA); this.platforms.push(mpA);
+    this.addPlatform(0,0,39,8,1,5,L);
+    this.addCheckpoint(0,1,41);
+    // SECTION B
+    this.addPlatform(0,0,48,12,1,14,A);
+    this._genObstacle(cfg,0,50,2);
+    this._genObstacle(cfg,-4,54,3);
+    const cB=new CollapsingPlatform(this.scene,0,0,59,5,0.5,4); this.addObstacle(cB); this.platforms.push(cB); this.collapsingPlatforms.push(cB);
+    this.addPlatform(0,0,65,10,1,6,A);
+    this.addCheckpoint(0,1,67);
+    // SECTION C – climb to the goal
+    this.addPlatform(0,1,73,8,1,4,A);
+    this.addPlatform(0,2.5,78,7,1,4,A);
+    this._genObstacle(cfg,3,80,4,2.5);
+    this.addPlatform(0,3,85,14,1,10,GOAL);
+    this.addStreetSign(-5,3,83,cfg.goalSign||'Finish');
+    this.addPortal(0,5,87);
+    // creatures
+    const cr=cfg.creature;
+    if(cr==='dragon'||cr==='finale') this.dragon=new FireDragon(this.scene);
+    if(cr==='bison'||cr==='finale'){
+      this.skyBisons.push(new SkyBison(this.scene,{baseY:24,radius:26,speed:0.22,centerZ:40,scale:1.4,phase:0}));
+      this.skyBisons.push(new SkyBison(this.scene,{baseY:17,radius:15,speed:0.4,centerZ:78,scale:0.7,phase:2}));
+    }
+    if(cr==='snake') this.snake=new HeadSnake(this.scene,{x:0,y:0.3,z:-6});
+    if(cr==='helicopter') this.addHelicopter();
+    // decoration
+    this.addThemeDeco(cfg);
+    if(cfg.clouds) this.addCloudDeco();
+  }
+  _genObstacle(cfg,x,z,i,y=0) {
+    const list=(cfg.obstacles&&cfg.obstacles.length)?cfg.obstacles:['pillow','bouncy'];
+    const t=list[i%list.length];
+    if(t==='pillow') this.addObstacle(new RotatingPillow(this.scene,x,y+1.5,z,5));
+    else if(t==='bouncy') this.addObstacle(new BouncyBed(this.scene,x,y+0.5,z));
+    else if(t==='slippery') this.addObstacle(new SlipperyFloor(this.scene,x,y+0.52,z,8,6));
+    else if(t==='cushion') this.addObstacle(new FallingCushionZone(this.scene,x,y+9,z,6,6));
+    else this.addObstacle(new RotatingPillow(this.scene,x,y+1.5,z,5));
+  }
+  addThemeDeco(cfg) {
+    const d=cfg.deco||{}; const shape=d.shape||'cone'; const colors=d.colors||[0xffffff]; const count=d.count||16; const maxZ=95;
+    for(let i=0;i<count;i++){
+      const c=colors[i%colors.length]; const side=Math.random()>0.5?1:-1; const z=Math.random()*maxZ; const x=side*(7+Math.random()*6);
+      const s=(d.scale||1)*(0.7+Math.random()*0.8);
+      const mat=new THREE.MeshStandardMaterial({color:c,roughness:d.rough!==undefined?d.rough:0.7,emissive:d.glow?c:0x000000,emissiveIntensity:d.glow?0.3:0});
+      let obj;
+      if(shape==='sphere'){ obj=new THREE.Mesh(new THREE.SphereGeometry(0.7*s,10,8),mat); }
+      else if(shape==='box'){ obj=new THREE.Mesh(new THREE.BoxGeometry(s,(1.5+Math.random()*2)*s,s),mat); }
+      else if(shape==='crystal'){ obj=new THREE.Mesh(new THREE.OctahedronGeometry(0.8*s),mat); }
+      else if(shape==='tree'){ obj=new THREE.Group();
+        const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.25*s,0.35*s,2.5*s,6),new THREE.MeshStandardMaterial({color:0x7a5230})); trunk.position.y=1.25*s; obj.add(trunk);
+        const top=new THREE.Mesh(new THREE.ConeGeometry(1.1*s,2.2*s,7),mat); top.position.y=3*s; obj.add(top); }
+      else if(shape==='mushroom'){ obj=new THREE.Group();
+        const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.2*s,0.25*s,1.2*s,6),new THREE.MeshStandardMaterial({color:0xf2ead0})); stem.position.y=0.6*s; obj.add(stem);
+        const cap=new THREE.Mesh(new THREE.SphereGeometry(0.7*s,10,6,0,Math.PI*2,0,Math.PI/2),mat); cap.position.y=1.2*s; obj.add(cap); }
+      else { obj=new THREE.Mesh(new THREE.ConeGeometry(0.6*s,(1.6+Math.random()*1.5)*s,6),mat); }
+      const baseY = d.float ? (3+Math.random()*14) : ((shape==='tree'||shape==='mushroom')?0:0.6);
+      obj.position.set(x,baseY,z);
+      obj.traverse?obj.traverse(m=>{if(m.isMesh)m.castShadow=true;}):(obj.castShadow=true);
+      this.scene.add(obj); this.levelObjects.push(obj);
+    }
+    if(d.stars) this.addStarField(d.stars);
+  }
+  addStarField(n) {
+    for(let i=0;i<n;i++){ const st=new THREE.Mesh(new THREE.SphereGeometry(0.08+Math.random()*0.12,4,4),new THREE.MeshBasicMaterial({color:0xffffff}));
+      st.position.set((Math.random()-0.5)*120,(Math.random()-0.1)*55,Math.random()*120); this.scene.add(st); this.levelObjects.push(st); }
   }
 
   addCloudDeco() {
