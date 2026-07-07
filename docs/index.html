@@ -179,7 +179,7 @@ for(const k in EXTRA_LEVELS) LEVEL_NAMES[k]=EXTRA_LEVELS[k].name;
 const LEVEL_COUNT=Object.keys(LEVEL_NAMES).length;
 
 // ============ Settings (persisted in localStorage) ============
-function loadSettings(){ const s={sfx:true,shake:true,difficulty:'normal'}; try{const raw=localStorage.getItem('valis-settings'); if(raw)Object.assign(s,JSON.parse(raw));}catch(e){} return s; }
+function loadSettings(){ const s={sfx:true,shake:true,shadows:true,difficulty:'normal'}; try{const raw=localStorage.getItem('valis-settings'); if(raw)Object.assign(s,JSON.parse(raw));}catch(e){} return s; }
 const SETTINGS=loadSettings();
 function saveSettings(){ try{localStorage.setItem('valis-settings',JSON.stringify(SETTINGS));}catch(e){} }
 function difficultyMult(){ return SETTINGS.difficulty==='easy'?1.5:(SETTINGS.difficulty==='hard'?0.7:1.0); }
@@ -2473,7 +2473,11 @@ class UIManager {
     mkRow('Geluidseffecten', mkToggle(()=>SETTINGS.sfx, v=>{SETTINGS.sfx=v;saveSettings(); if(v)this.game.audio.playCheckpoint();}));
     mkRow('Muziek', mkToggle(()=>window.__getMusic&&window.__getMusic(), v=>{ if(window.__setMusic)window.__setMusic(v); }));
     mkRow('Camera schudden', mkToggle(()=>SETTINGS.shake, v=>{SETTINGS.shake=v;saveSettings(); if(v&&this.game.camera)this.game.camera.shake(0.3,0.3);}));
+    mkRow('Schaduwen', mkToggle(()=>SETTINGS.shadows, v=>{SETTINGS.shadows=v;saveSettings(); this.game.setShadows(v);}));
     mkRow('Moeilijkheid', mkSeg([{label:'Makkelijk',value:'easy'},{label:'Normaal',value:'normal'},{label:'Moeilijk',value:'hard'}], ()=>SETTINGS.difficulty, v=>{SETTINGS.difficulty=v;saveSettings();}));
+    const reset=document.createElement('button'); reset.className='menu-btn'; reset.textContent='Herstel standaard'; reset.style.cssText='margin-top:0.4rem;font-size:0.95rem;';
+    reset.addEventListener('click',()=>{ SETTINGS.sfx=true;SETTINGS.shake=true;SETTINGS.shadows=true;SETTINGS.difficulty='normal';saveSettings(); if(window.__setMusic)window.__setMusic(false); this.game.setShadows(true); this.buildSettings(); });
+    list.appendChild(reset);
   }
   showLevelComplete() {
     const stars=this.state.getStarRating();const el=document.getElementById('stars-display');
@@ -2525,6 +2529,12 @@ class Game {
     sun.shadow.mapSize.width=2048;sun.shadow.mapSize.height=2048;sun.shadow.camera.near=0.5;sun.shadow.camera.far=200;
     sun.shadow.camera.left=-60;sun.shadow.camera.right=60;sun.shadow.camera.top=60;sun.shadow.camera.bottom=-60;
     this.scene.add(sun);this.sun=sun;this.scene.add(new THREE.HemisphereLight(0x88aaff,0xffaa88,0.4));
+    this.setShadows(SETTINGS.shadows!==false);
+  }
+  setShadows(on) {
+    this.renderer.shadowMap.enabled=on;
+    if(this.sun)this.sun.castShadow=on;
+    this.scene.traverse(o=>{ if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{m.needsUpdate=true;}); } });
   }
   setupEventListeners() {
     window.addEventListener('resize',()=>{this.renderer.setSize(window.innerWidth,window.innerHeight);if(this.camera){this.camera.camera.aspect=window.innerWidth/window.innerHeight;this.camera.camera.updateProjectionMatrix();}});
