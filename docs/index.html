@@ -165,7 +165,7 @@
 import * as THREE from 'three';
 
 // Level titles – single source of truth (HUD, level-complete, level-select)
-const LEVEL_NAMES={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons',8:'Noordelijke Luchttempel',9:'De Slang',10:'Het Koraalrif',11:'Ruimtestation Vali-1',12:'De Vuurberg',13:'Snoepland'};
+const LEVEL_NAMES={1:'Slaapkamer Chaos',2:'De Vruchtenbuurt',3:'Citroenstraat & Speeltuinen',4:'De Duinen & Bosjes van Pex',5:'Kijkduin Strand',6:'De Grote Finale',7:'De Luchttempel & Luchtbizons',8:'Klas 4A – De Zonnebloemschool',9:'De Slang',10:'Het Koraalrif',11:'Ruimtestation Vali-1',12:'De Vuurberg',13:'Snoepland'};
 
 // Levels 14-33: data-driven themed levels built by LevelManager.buildGeneric(cfg).
 // pal = platform colours; deco = scattered props; creature/lava/clouds/stars = extras.
@@ -1113,7 +1113,7 @@ class LevelManager {
   }
   loadLevel(n) {
     this.state.currentLevel=n;
-    const builders={1:'buildBedroomChaos',2:'buildSchoolyard',3:'buildAngryTeachers',4:'buildMonsterForest',5:'buildCrazyDads',6:'buildGrandFinale',7:'buildAirbender',8:'buildAirbenderNorth',9:'buildSnakeChase',10:'buildUnderwaterReef',11:'buildSpaceStation',12:'buildVolcano',13:'buildCandyland'};
+    const builders={1:'buildBedroomChaos',2:'buildSchoolyard',3:'buildAngryTeachers',4:'buildMonsterForest',5:'buildCrazyDads',6:'buildGrandFinale',7:'buildAirbender',8:'buildClassroom',9:'buildSnakeChase',10:'buildUnderwaterReef',11:'buildSpaceStation',12:'buildVolcano',13:'buildCandyland'};
     try{
       if(builders[n]) this[builders[n]]();
       else if(EXTRA_LEVELS[n]) this.buildGeneric(EXTRA_LEVELS[n]);
@@ -1790,40 +1790,93 @@ class LevelManager {
   }
 
   // ============ LEVEL 8: Avatar: The Last Airbender – Noordelijke Luchttempel ============
-  buildAirbenderNorth() {
+  // ============ LEVEL 8: Klas 4A van de Zonnebloemschool ============
+  // In het lokaal met de juf en 28 kinderen.
+  buildClassroom() {
     this.state.levelDuration=100;
-    this.scene.background=new THREE.Color(0xbfe3f5);
-    this.scene.fog=new THREE.FogExp2(0xdaf0fb,0.003);
-    const stone=0xa9b4bf, tile=0x8fb3d9, ledge=0xb8c6d6, sanctuary=0x6f97c4;
-    this.addPlatform(0,0,0,14,1,12,stone);
-    this.addStreetSign(-5,0,2,'Noordelijke Luchttempel');
-    this.addAirTempleSpire(11,0,0,7); this.addAirTempleSpire(-11,0,-2,6);
-    this.addPlatform(0,0,13,10,1,12,tile);
-    this.addObstacle(new RotatingPillow(this.scene,0,1.5,12,5));
-    this.addObstacle(new BouncyBed(this.scene,0,0.5,17));
-    this.addPlatform(0,0,25,8,1,5,ledge);
-    const rb1=new RideableSkyBison(this.scene,0,0.5,32,'x',2.2,0.7); this.addObstacle(rb1); this.platforms.push(rb1);
-    this.addPlatform(0,0,39,8,1,5,ledge);
+    this.scene.background=new THREE.Color(0xf3ead0);
+    this.scene.fog=new THREE.FogExp2(0xf3ead0,0.004);
+    const floor=0xcdb892, floor2=0xd8c49a, front=0xe6d9a8;
+    // === START: bij de deur van het lokaal ===
+    this.addPlatform(0,0,0,14,1,12,0xaaccaa);
+    this.addStreetSign(-5,0,2,'Klas 4A');
+    this.addClassroomProps();
+    // === SECTIE A: tussen de tafels door ===
+    this.addPlatform(0,0,14,12,1,16,floor);
+    this.addObstacle(new SlipperyFloor(this.scene,0,0.52,16,8,6));      // net gedweilde vloer
+    this.addObstacle(new RotatingPillow(this.scene,0,1.5,21,5));         // ronddraaiende mobiel
+    this.addPlatform(0,0,27,8,1,5,floor2);
+    const mp1=new MovingPlatform(this.scene,0,0,33,6,1,5,'x',3,1.1); this.addObstacle(mp1); this.platforms.push(mp1); // rollende boekenkar
+    this.addPlatform(0,0,39,8,1,5,floor2);
+    // === CHECKPOINT 1 ===
     this.addCheckpoint(0,1,41);
-    this.addPlatform(0,0,48,10,1,12,tile);
-    this.addObstacle(new SlipperyFloor(this.scene,0,0.52,50,8,7));
-    const c1=new CollapsingPlatform(this.scene,0,0,58,5,0.5,4); this.addObstacle(c1); this.platforms.push(c1); this.collapsingPlatforms.push(c1);
-    this.addPlatform(0,0,64,8,1,4,ledge);
-    const rb2=new RideableSkyBison(this.scene,0,0.5,71,'x',2.0,0.6); this.addObstacle(rb2); this.platforms.push(rb2);
-    this.addPlatform(0,0,78,8,1,5,ledge);
-    this.addCheckpoint(0,1,80);
-    this.addPlatform(0,1,85,8,1,4,tile);
-    this.addObstacle(new RotatingPillow(this.scene,0,2.5,88,5));
-    this.addPlatform(0,2.5,90,7,1,4,tile);
-    this.addPlatform(0,4,95,7,1,4,tile);
-    this.addPlatform(0,4,102,14,1,10,sanctuary);
-    this.addStreetSign(-5,4,99,'Tempel van de Noorderwind');
-    this.addAirTempleSpire(11,4,104,8); this.addAirTempleSpire(-11,4,104,8);
-    this.addPortal(0,6,105);
-    this.skyBisons.push(new SkyBison(this.scene,{baseY:27,radius:30,speed:0.2,centerZ:40,scale:1.6,phase:1}));
-    this.skyBisons.push(new SkyBison(this.scene,{baseY:18,radius:16,speed:0.4,centerZ:75,scale:0.7,phase:3}));
-    this.addFloatingIslands();
-    this.addCloudDeco();
+    // === SECTIE B: de juf loopt rond ===
+    this.addPlatform(0,0,48,12,1,14,floor);
+    this.addObstacle(new AngryTeacher(this.scene,0,0,52,3,1.1));         // DE JUF – stuurt je terug naar je plek
+    const c1=new CollapsingPlatform(this.scene,0,0,58,5,0.5,4); this.addObstacle(c1); this.platforms.push(c1); this.collapsingPlatforms.push(c1); // wiebelende tafel
+    this.addPlatform(0,0,64,8,1,4,floor2);
+    this.addObstacle(new BouncyBed(this.scene,0,0.5,66));                // zitzak in de leeshoek
+    this.addPlatform(0,0,72,8,1,5,floor2);
+    // === CHECKPOINT 2 ===
+    this.addCheckpoint(0,1,74);
+    // === SECTIE C: naar het schoolbord ===
+    this.addPlatform(0,1,80,8,1,4,floor);
+    this.addObstacle(new RotatingPillow(this.scene,0,2.5,84,5));         // hangende mobiel boven het bord
+    this.addPlatform(0,2,86,7,1,4,floor);
+    this.addPlatform(0,2,93,14,1,10,front);
+    this.addStreetSign(-5,2,91,'Het Schoolbord');
+    this.addPortal(0,4,96);                                              // de bel gaat!
+  }
+
+  addClassroomProps() {
+    const wallMat=new THREE.MeshStandardMaterial({color:0xefe4c6,roughness:0.95});
+    // Side walls + back/front wall = het lokaal
+    for(const sx of [-1,1]){ const wall=new THREE.Mesh(new THREE.BoxGeometry(0.5,6,116),wallMat); wall.position.set(sx*11,3,42); wall.receiveShadow=true; this.scene.add(wall); this.levelObjects.push(wall); }
+    // Back wall sits BEHIND the chase camera (which starts ~8 units behind the player) so it never blocks the view
+    const back=new THREE.Mesh(new THREE.BoxGeometry(22,6,0.5),wallMat); back.position.set(0,3,-13); this.scene.add(back); this.levelObjects.push(back);
+    const front=new THREE.Mesh(new THREE.BoxGeometry(22,6,0.5),wallMat); front.position.set(0,3,100); this.scene.add(front); this.levelObjects.push(front);
+    // Schoolbord (blackboard) op de voorwand
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(9.4,3.4,0.1),new THREE.MeshStandardMaterial({color:0x8a5a2b})); frame.position.set(0,3.2,99.78); this.scene.add(frame); this.levelObjects.push(frame);
+    const board=new THREE.Mesh(new THREE.BoxGeometry(9,3,0.15),new THREE.MeshStandardMaterial({color:0x21402c,roughness:0.85})); board.position.set(0,3.2,99.72); this.scene.add(board); this.levelObjects.push(board);
+    const chalk=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:0.06});
+    for(let i=0;i<4;i++){ const line=new THREE.Mesh(new THREE.BoxGeometry(2.5+Math.random()*3,0.05,0.02),chalk); line.position.set(-1.5+Math.random()*1.5,3.9-i*0.55,99.64); this.scene.add(line); this.levelObjects.push(line); }
+    // "4A" in krijt
+    const b1=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.8,0.02),chalk); b1.position.set(2.6,4.2,99.63); this.scene.add(b1); this.levelObjects.push(b1);
+    const b2=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.08,0.02),chalk); b2.position.set(2.9,4.2,99.63); this.scene.add(b2); this.levelObjects.push(b2);
+    const b3=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.8,0.02),chalk); b3.position.set(3.2,4.2,99.63); this.scene.add(b3); this.levelObjects.push(b3);
+    // Klok
+    const clock=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.1,16),new THREE.MeshStandardMaterial({color:0xffffff})); clock.rotation.x=Math.PI/2; clock.position.set(-7,4.6,99.6); this.scene.add(clock); this.levelObjects.push(clock);
+    const hand=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.35,0.02),new THREE.MeshStandardMaterial({color:0x222222})); hand.position.set(-7,4.75,99.5); this.scene.add(hand); this.levelObjects.push(hand);
+    // Bureau van de juf
+    const tdesk=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.15,1.1),new THREE.MeshStandardMaterial({color:0x8a5a2b})); tdesk.position.set(-5,1.0,96); tdesk.castShadow=true; this.scene.add(tdesk); this.levelObjects.push(tdesk);
+    for(const lx of [-6,-4]) for(const lz of [95.6,96.4]){ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.1,1,0.1),new THREE.MeshStandardMaterial({color:0x6a4420})); leg.position.set(lx,0.5,lz); this.scene.add(leg); this.levelObjects.push(leg); }
+    // Zonnebloem-poster
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1,6),new THREE.MeshStandardMaterial({color:0x228B22})); stem.position.set(7,3.2,99.6); this.scene.add(stem); this.levelObjects.push(stem);
+    const center=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,0.1,12),new THREE.MeshStandardMaterial({color:0x8B4513})); center.rotation.x=Math.PI/2; center.position.set(7,3.9,99.6); this.scene.add(center); this.levelObjects.push(center);
+    for(let i=0;i<10;i++){ const a=(i/10)*Math.PI*2; const petal=new THREE.Mesh(new THREE.SphereGeometry(0.18,6,4),new THREE.MeshStandardMaterial({color:0xFFD700,emissive:0xFFAA00,emissiveIntensity:0.15})); petal.scale.set(1,0.4,1); petal.position.set(7+Math.cos(a)*0.5,3.9+Math.sin(a)*0.5,99.6); this.scene.add(petal); this.levelObjects.push(petal); }
+    // 28 kinderen aan hun tafeltjes, met het gezicht naar het bord (+z)
+    const shirts=[0xff6f6f,0x6fa8ff,0x7ed07e,0xffd36a,0xc77aff,0xff9ad2,0x6fe0d0,0xffa15a];
+    let n=0;
+    for(let i=0;i<14;i++){ const z=12+i*6; for(const sx of [-8.5,8.5]){ this.addSchoolKid(sx,z,shirts[n%shirts.length]); n++; } }
+  }
+
+  addSchoolKid(x,z,shirt) {
+    const g=new THREE.Group(); g.position.set(x,0,z);
+    // Stoeltje
+    const chair=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.1,0.6),new THREE.MeshStandardMaterial({color:0x9a6a3a})); chair.position.y=0.55; g.add(chair);
+    // Zittend lijfje
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.2,0.5,8),new THREE.MeshStandardMaterial({color:shirt})); body.position.y=0.85; body.castShadow=true; g.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.2,10,8),new THREE.MeshStandardMaterial({color:0xffcc99})); head.position.y=1.25; head.castShadow=true; g.add(head);
+    const hairCols=[0x3b2a1a,0x6b4423,0x1a1a1a,0xcaa060,0x8a5a2a];
+    const hair=new THREE.Mesh(new THREE.SphereGeometry(0.21,10,8,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:hairCols[(x<0?0:1)+Math.floor(z)%3]})); hair.position.y=1.28; g.add(hair);
+    const eMat=new THREE.MeshStandardMaterial({color:0x222222});
+    const le=new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6),eMat); le.position.set(-0.07,1.26,0.17); g.add(le);
+    const re=new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6),eMat); re.position.set(0.07,1.26,0.17); g.add(re);
+    // Tafeltje ervoor (richting bord)
+    const desk=new THREE.Mesh(new THREE.BoxGeometry(0.95,0.08,0.6),new THREE.MeshStandardMaterial({color:0xdcc39a})); desk.position.set(0,0.98,0.55); desk.castShadow=true; g.add(desk);
+    const legMat=new THREE.MeshStandardMaterial({color:0x777777});
+    for(const lx of [-0.4,0.4]) for(const lz of [0.3,0.8]){ const leg=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.95,0.05),legMat); leg.position.set(lx,0.48,lz); g.add(leg); }
+    this.scene.add(g); this.levelObjects.push(g);
   }
 
   // ============ LEVEL 9: De Slang – vlucht, of word zelf de slang ============
